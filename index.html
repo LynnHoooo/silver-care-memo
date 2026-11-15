@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>岁岁念 · 卡片式银发温情备忘录</title>
+<meta name="description" content="Hack4Good 技术向善作品：适老化卡片备忘 + 游戏化亲情正反馈，纯前端运行，数据保存在本机浏览器。" />
+<link rel="preconnect" href="styles.css" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body data-mode="elder">
+
+  <main id="app" class="app" aria-label="岁岁念主界面">
+
+    <header class="app-header">
+      <div class="brand">
+        <h1 class="brand-title">岁岁念</h1>
+        <p class="brand-sub">卡片式银发温情备忘录</p>
+        <p class="brand-date" id="todayLine">今天是 ——</p>
+      </div>
+
+      <div class="mode-area">
+        <p class="mode-label" id="modeLabel">当前视角：长辈卡片模式</p>
+        <div class="mode-switch" role="group" aria-label="视角切换">
+          <button type="button" class="mode-btn is-on" id="modeElder" aria-pressed="true">👵 长辈卡片模式</button>
+          <button type="button" class="mode-btn" id="modeChild" aria-pressed="false">🧑 子女守护模式</button>
+        </div>
+        <p class="mode-tip" id="modeTip">大图标、大按钮，只需两下手指就能听完、办妥。</p>
+      </div>
+
+      <div class="header-actions">
+        <button type="button" class="btn btn-award" id="reportBtn">🏆 年度亲情战绩报告</button>
+        <button type="button" class="btn btn-primary only-child" id="composerBtn" hidden>➕ 给爸妈设置提醒</button>
+      </div>
+    </header>
+
+    <section class="notice-bar only-child" id="noticeBar" hidden aria-live="polite" aria-label="安心动态通知栏">
+      <div class="notice-head">
+        <h2 class="notice-title">🔔 安心动态通知栏</h2>
+        <p class="notice-desc">爸妈刚完成的打卡与留言，会实时同步到这里</p>
+      </div>
+      <ul class="notice-list" id="noticeList"></ul>
+      <p class="notice-empty" id="noticeEmpty">还没有动态。切到长辈模式点一次「✅ 我办妥了」试试。</p>
+    </section>
+
+    <section class="garden" id="gardenPanel" aria-label="亲情暖心花园">
+      <div class="garden-plant">
+        <p class="garden-kicker">🌱 亲情暖心花园</p>
+        <div class="plant-scene" id="plantScene">
+          <span class="plant-deco" id="plantDeco" aria-hidden="true"></span>
+          <span class="plant-main" id="plantMain">🌱</span>
+          <span class="plant-ground" aria-hidden="true"></span>
+        </div>
+        <p class="plant-stage" id="plantStage">小嫩芽</p>
+      </div>
+
+      <div class="garden-info">
+        <h2 class="garden-title">亲情能量 <span class="energy-num" id="energyNum">0</span> 点</h2>
+        <div class="energy-bar" role="progressbar" aria-label="亲情花园成长进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="energyBar">
+          <div class="energy-fill" id="energyFill"></div>
+        </div>
+        <p class="energy-next" id="energyNext">再攒 300 点，小树就含苞待放啦</p>
+        <ol class="stage-track" id="stageTrack">
+          <li data-stage="0">🌱 小嫩芽</li>
+          <li data-stage="1">🌷 含苞待放</li>
+          <li data-stage="2">🌸 繁花盛开</li>
+          <li data-stage="3">🍎 硕果累累</li>
+        </ol>
+        <p class="garden-hint">💡 每点一次「✅ 我办妥了」，能量 +100，花园就长大一点。</p>
+      </div>
+    </section>
+
+    <nav class="filter-tabs" aria-label="卡片分类筛选">
+      <button type="button" class="tab is-on" data-filter="all" aria-pressed="true">🗂 全部</button>
+      <button type="button" class="tab tab-medicine" data-filter="medicine" aria-pressed="false">💊 按时吃药</button>
+      <button type="button" class="tab tab-phone" data-filter="phone" aria-pressed="false">📞 亲友电话</button>
+      <button type="button" class="tab tab-travel" data-filter="travel" aria-pressed="false">🚌 出行提醒</button>
+      <button type="button" class="tab tab-message" data-filter="message" aria-pressed="false">💌 给孩子的留言</button>
+    </nav>
+
+    <section class="composer only-child" id="composer" hidden aria-label="子女守护设置面板">
+      <h2 class="composer-title">🧑 远程为爸妈添加一张大卡片</h2>
+
+      <p class="field-label">① 先选种类</p>
+      <div class="cat-pick" id="catPick" role="group" aria-label="卡片种类"></div>
+
+      <p class="field-label">② 或者直接用温情模板（不用打字）</p>
+      <div class="tpl-pick" id="tplPick"></div>
+
+      <p class="field-label">③ 检查一下内容，确认字号都够大</p>
+      <div class="field-rows" id="fieldRows"></div>
+
+      <div class="composer-actions">
+        <button type="button" class="btn btn-primary" id="saveCardBtn">✅ 保存到爸妈的卡片</button>
+        <button type="button" class="btn btn-ghost" id="closeComposerBtn">取消</button>
+      </div>
+    </section>
+
+    <div class="board-head">
+      <h2 class="board-title" id="boardTitle">今日备忘卡片</h2>
+      <p class="board-count" id="boardCount"></p>
+    </div>
+
+    <main class="board" id="board"></main>
+    <p class="board-empty" id="boardEmpty" hidden>这个分类还没有卡片，切到「🧑 子女守护模式」为爸妈加一张吧。</p>
+
+    <footer class="app-footer">
+      <p>岁岁念 · Hack4Good「技术向善」参赛作品 · 游戏设计 × 智慧养老</p>
+      <p>纯前端运行，所有卡片与打卡进度只保存在本机浏览器（localStorage）；语音由浏览器内置朗读，无需联网、不上传任何信息。</p>
+      <div class="foot-tools">
+        <button type="button" class="btn btn-ghost btn-small" id="speakTestBtn">🔊 试一下语音</button>
+        <button type="button" class="btn btn-ghost btn-small" id="resetBtn">♻️ 恢复示例数据</button>
+      </div>
+    </footer>
+
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div class="fx-layer" id="fxLayer" aria-hidden="true"></div>
+
+  <div class="overlay" id="callOverlay" hidden>
+    <div class="call-card" role="dialog" aria-modal="true" aria-label="模拟通话">
+      <p class="call-tag">温情模拟通话（演示，不会真的拨号）</p>
+      <div class="call-avatar-wrap">
+        <span class="ring ring1"></span>
+        <span class="ring ring2"></span>
+        <span class="call-avatar" id="callAvatar">👩</span>
+      </div>
+      <h2 class="call-name" id="callName">女儿</h2>
+      <p class="call-num" id="callNum"></p>
+      <p class="call-state" id="callState">正在呼叫…</p>
+      <div class="call-actions">
+        <button type="button" class="btn btn-danger" id="hangupBtn">📴 挂断</button>
+      </div>
+      <p class="call-hint" id="callHint">接通后慢慢聊，说一句「我挺好的」。</p>
+    </div>
+  </div>
+
+  <div class="overlay" id="reportOverlay" hidden>
+    <div class="poster" id="poster" role="dialog" aria-modal="true" aria-label="年度亲情战绩回忆录">
+      <div class="poster-glow" aria-hidden="true"></div>
+      <p class="poster-kicker">—— 年度亲情战绩回忆录 ——</p>
+      <h2 class="poster-title"><span id="posterYear">2026</span> 年 · 岁岁念战绩</h2>
+      <p class="poster-sub" id="posterSlogan">这一年，爱被记了 N 次</p>
+
+      <div class="stat-grid" id="statGrid"></div>
+
+      <h3 class="medal-title">🎖 本年度趣味勋章</h3>
+      <div class="medal-grid" id="medalGrid"></div>
+
+      <p class="poster-tip" id="posterTip" hidden></p>
+
+      <div class="poster-actions">
+        <button type="button" class="btn btn-ghost" id="reportCloseBtn">关闭</button>
+        <button type="button" class="btn btn-award" id="posterSaveBtn">🖼 生成纪念海报提示</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
