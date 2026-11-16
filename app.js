@@ -6,6 +6,8 @@
   const ENERGY_PER_CHECKIN = 100;
   const ENERGY_PER_MESSAGE = 60;
 
+  const TEXT_SIZES = { normal: '标准', large: '大', xlarge: '特大' };
+
   /* ============ 配置 ============ */
 
   const CATS = {
@@ -117,6 +119,7 @@
     return {
       day: todayKey(),
       mode: 'elder',
+      textSize: 'normal',
       energy: 0,
       stats: { childSetups: 0, messages: 0 },
       checkins: [],
@@ -153,10 +156,26 @@
     s.feed = s.feed || [];
     s.cards = s.cards || [];
     s.mode = s.mode === 'child' ? 'child' : 'elder';
+    s.textSize = TEXT_SIZES[s.textSize] ? s.textSize : 'normal';
     if (s.day !== todayKey()) {
       s.day = todayKey();
       s.cards.forEach(c => { c.done = false; c.doneAt = null; });
     }
+  }
+
+  /* 页面一直开着也会跨日：由定时器与可见性事件触发 */
+  function rolloverIfNewDay(announce) {
+    const today = todayKey();
+    if (state.day === today) return false;
+    state.day = today;
+    state.cards.forEach(c => { c.done = false; c.doneAt = null; });
+    save();
+    if (announce) {
+      render();
+      toast('🌅 新的一天，印章已清空，今天的卡片可以重新办理啦');
+      voice.say('新的一天开始啦，昨天的印章已经收起，今天的卡片可以重新办理了。', 0.9);
+    }
+    return true;
   }
 
   function save() {
@@ -209,6 +228,49 @@
     if (/爷爷|外公|大爷/.test(name)) return '👴';
     if (/老姐妹|老伙计|朋友/.test(name)) return '🧑‍🤝‍🧑';
     return '📞';
+  }
+
+  /* ============ 字号调节 ============ */
+
+  function applyTextSize(size, announce) {
+    state.textSize = TEXT_SIZES[size] ? size : 'normal';
+    document.documentElement.dataset.textsize = state.textSize;
+    document.querySelectorAll('.ts-btn').forEach(b => {
+      const on = b.dataset.size === state.textSize;
+      b.classList.toggle('is-on', on);
+      b.setAttribute('aria-pressed', String(on));
+    });
+    if (announce) {
+      save();
+      toast(`🔎 字号已切到「${TEXT_SIZES[state.textSize]}」`);
+      voice.say(`字号已经调整为${TEXT_SIZES[state.textSize]}，看看现在是不是更清楚了。`, 0.9);
+    }
+  }
+
+  /* ============ 弹窗焦点管理 ============ */
+
+  const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])';
+  let openerFocus = null;
+
+  function showOverlay(node, focusNode) {
+    openerFocus = document.activeElement;
+    node.hidden = false;
+    if (focusNode) focusNode.focus();
+  }
+
+  function hideOverlay(node) {
+    node.hidden = true;
+    if (openerFocus && document.contains(openerFocus)) openerFocus.focus();
+    openerFocus = null;
+  }
+
+  function trapTab(e, container) {
+    if (e.key !== 'Tab') return;
+    const items = Array.from(container.querySelectorAll(FOCUSABLE)).filter(n => n.offsetParent !== null);
+    if (!items.length) return;
+    const first = items[0], last = items[items.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
   }
 
   /* ============ 语音朗读 ============ */
@@ -472,8 +534,7 @@
     $('#callNum').textContent = card.phone || '（未填写号码，仅作温情演示）';
     $('#callState').textContent = '正在呼叫…';
     $('#callHint').textContent = card.line2 ? `方便的时间：${card.line2}` : '接通后慢慢聊，说一句「我挺好的」。';
-    overlay.hidden = false;
-    $('#hangupBtn').focus();
+    showOverlay(overlay, $('#hangupBtn'));
 
     voice.say(`正在为您呼叫 ${name.split('·')[0].trim()}，请稍候`, 0.9);
     const ring = () => { beep(500, 0, .3, .1); beep(650, .35, .3, .1); };
@@ -496,7 +557,7 @@
 
   function endCall() {
     clearCallTimers();
-    $('#callOverlay').hidden = true;
+    hideOverlay($('#callOverlay'));
     toast('📴 通话结束。回到卡片点「✅ 我办妥了」，把这份团圆记进战绩');
   }
 
@@ -571,10 +632,14 @@
 
   function openReport() {
     renderReport();
-    $('#reportOverlay').hidden = false;
-    $('#reportCloseBtn').focus();
+    showOverlay($('#reportOverlay'), $('#reportCloseBtn'));
     const s = computeStats();
     voice.say(`${s.year} 年岁岁念亲情战绩：您一共完成 ${s.tasks} 项日常守护任务，今日健康守护率 ${s.rate} 百分之，子女为您设置了 ${s.childSetups} 次暖心提醒，累计亲情能量 ${s.energy} 点。这一年，爱被记了很多次。`, 0.95);
+  }
+
+  function closeReport() {
+    hideOverlay($('#reportOverlay'));
+    if (voice.supported) window.speechSynthesis.cancel();
   }
 
   function posterHint() {
@@ -688,6 +753,10 @@
     if (state.mode === 'child') {
       const admin = el('div', 'card-admin');
       admin.appendChild(el('span', 'pill ' + (card.done ? 'pill-done' : 'pill-wait'), card.done ? `👵 父母已办妥 · ${fmtClock(card.doneAt)}` : '⏳ 父母还没打卡'));
+      const edit = el('button', 'mini-btn mini-btn-edit', '✏️ 修改这张');
+      edit.type = 'button';
+      edit.addEventListener('click', () => openComposer(card));
+      admin.appendChild(edit);
       const del = el('button', 'mini-btn', '🗑 移除这张卡片');
       del.type = 'button';
       del.addEventListener('click', () => {
@@ -743,7 +812,7 @@
 
   /* ============ 子女设置面板 ============ */
 
-  const composerDraft = { type: 'medicine', values: {} };
+  const composerDraft = { type: 'medicine', values: {}, editingId: null };
 
   function renderCatPick() {
     const box = $('#catPick');
@@ -808,20 +877,29 @@
       return;
     }
     const v = composerDraft.values;
-    const card = {
-      id: uid(),
+    const fields = {
       type,
-      source: 'child',
       heading,
       line2: (v.line2 || '').trim(),
       line3: (v.line3 || '').trim(),
       phone: (v.phone || '').trim(),
-      done: false,
-      doneAt: null,
     };
-    if (type === 'medicine' && !card.line3) card.line3 = '今天';
-    if (type === 'travel' && !card.line3) card.line3 = '今天出门';
-    state.cards.unshift(card);
+    if (type === 'medicine' && !fields.line3) fields.line3 = '今天';
+    if (type === 'travel' && !fields.line3) fields.line3 = '今天出门';
+
+    if (composerDraft.editingId) {
+      const card = state.cards.find(c => c.id === composerDraft.editingId);
+      if (!card) { closeComposer(); return; }
+      Object.assign(card, fields);
+      pushFeed('setup', `✏️ 您修改了「${CATS[type].name} · ${heading}」卡片`);
+      save();
+      render();
+      closeComposer();
+      toast('✅ 修改已保存，爸妈那边看到的就是新内容');
+      return;
+    }
+
+    state.cards.unshift(Object.assign({ id: uid(), source: 'child', done: false, doneAt: null }, fields));
     state.stats.childSetups += 1;
     pushFeed('setup', `🧑 您刚为爸妈新增「${CATS[type].name} · ${heading}」卡片`);
     save();
@@ -831,7 +909,16 @@
     toast('✅ 已添加到爸妈的卡片，切到长辈模式就能看到');
   }
 
-  function openComposer() {
+  function openComposer(editCard) {
+    composerDraft.editingId = editCard ? editCard.id : null;
+    composerDraft.type = editCard ? editCard.type : 'medicine';
+    composerDraft.values = editCard
+      ? { heading: editCard.heading || '', line2: editCard.line2 || '', line3: editCard.line3 || '', phone: editCard.phone || '' }
+      : {};
+
+    $('#composerTitle').textContent = editCard ? '✏️ 修改这张卡片' : '🧑 远程为爸妈添加一张大卡片';
+    $('#saveCardBtn').textContent = editCard ? '💾 保存修改' : '✅ 保存到爸妈的卡片';
+
     $('#composer').hidden = false;
     $('#composerBtn').hidden = true;
     renderCatPick(); renderTplPick(); renderFieldRows();
@@ -841,6 +928,7 @@
   }
 
   function closeComposer() {
+    composerDraft.editingId = null;
     $('#composer').hidden = true;
     if (state.mode === 'child') $('#composerBtn').hidden = false;
   }
@@ -901,12 +989,19 @@
   });
 
   $('#reportBtn').addEventListener('click', openReport);
-  $('#reportCloseBtn').addEventListener('click', () => { $('#reportOverlay').hidden = true; voice.supported && window.speechSynthesis.cancel(); });
+  $('#reportCloseBtn').addEventListener('click', closeReport);
   $('#posterSaveBtn').addEventListener('click', posterHint);
-  $('#composerBtn').addEventListener('click', openComposer);
+  $('#composerBtn').addEventListener('click', () => openComposer());
   $('#closeComposerBtn').addEventListener('click', closeComposer);
   $('#saveCardBtn').addEventListener('click', saveComposerCard);
   $('#hangupBtn').addEventListener('click', endCall);
+
+  document.querySelectorAll('.ts-btn').forEach(b => {
+    b.addEventListener('click', () => applyTextSize(b.dataset.size, true));
+  });
+
+  $('#callOverlay').addEventListener('keydown', e => trapTab(e, $('#callOverlay')));
+  $('#reportOverlay').addEventListener('keydown', e => trapTab(e, $('#reportOverlay')));
 
   document.querySelectorAll('.filter-tabs .tab').forEach(tab => {
     tab.addEventListener('click', () => {
@@ -927,6 +1022,7 @@
     filter = 'all';
     lastStage = 0;
     save();
+    applyTextSize(state.textSize, false);
     applyMode('elder');
     render();
     toast('♻️ 已恢复示例数据，四大分类卡片都回来了');
@@ -935,11 +1031,11 @@
   document.addEventListener('keydown', e => {
     if (e.key !== 'Escape') return;
     if (!$('#callOverlay').hidden) endCall();
-    else if (!$('#reportOverlay').hidden) $('#reportOverlay').hidden = true;
+    else if (!$('#reportOverlay').hidden) closeReport();
   });
 
   $('#callOverlay').addEventListener('click', e => { if (e.target === $('#callOverlay')) endCall(); });
-  $('#reportOverlay').addEventListener('click', e => { if (e.target === $('#reportOverlay')) $('#reportOverlay').hidden = true; });
+  $('#reportOverlay').addEventListener('click', e => { if (e.target === $('#reportOverlay')) closeReport(); });
 
   window.addEventListener('storage', e => {
     if (e.key !== STORE_KEY) return;
@@ -952,8 +1048,13 @@
   /* ============ 启动 ============ */
 
   renderHeader();
+  applyTextSize(state.textSize, false);
   applyMode(state.mode);
   render();
+
+  setInterval(() => rolloverIfNewDay(true), 30000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) rolloverIfNewDay(true); });
+  window.addEventListener('focus', () => rolloverIfNewDay(true));
 
   setTimeout(() => {
     toast('👋 欢迎体验岁岁念：点卡片上的「🔊 听一听」或「✅ 我办妥了」就能感受语音与花园成长');

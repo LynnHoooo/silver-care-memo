@@ -6,6 +6,7 @@
   --bg-soft: #FBF4E6;
   --ink: #222222;
   --ink-soft: #4A4438;
+  --ink-mute: #6B6552;   /* 比 ink-soft 浅一档，但仍在浅底上 ≥4.5:1 */
   --line: #E6DCC6;
 
   --c-medicine: #C25A00;   --c-medicine-bg: #FFEDDB;  --c-medicine-edge: #FFB067;
@@ -31,6 +32,9 @@
 * { box-sizing: border-box; }
 
 html { font-size: 20px; }
+/* 三档字号：只改根字号，全站 rem 尺寸与触控目标随之放大 */
+html[data-textsize="large"]  { font-size: 22px; }
+html[data-textsize="xlarge"] { font-size: 25px; }
 
 body {
   margin: 0;
@@ -86,6 +90,24 @@ button { font-family: inherit; }
 .btn-ghost   { background: #FFFFFF; }
 .btn-small   { min-height: 60px; font-size: 1rem; padding: 12px 20px; }
 
+/* ---------- 跳转链接（键盘与读屏用户） ---------- */
+.skip-link {
+  position: fixed;
+  left: 50%;
+  top: 0;
+  transform: translate(-50%, -140%);
+  z-index: 90;
+  padding: 16px 28px;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #FFF8E8;
+  background: #6B4E00;
+  border-radius: 0 0 var(--r-md) var(--r-md);
+  text-decoration: none;
+  transition: transform .18s ease;
+}
+.skip-link:focus { transform: translate(-50%, 0); }
+
 /* ---------- 顶部 ---------- */
 .app-header {
   background: linear-gradient(160deg, #FFF6E4, #FFFDF7 60%);
@@ -133,6 +155,25 @@ button { font-family: inherit; }
 .mode-tip { margin: 0; font-size: 1rem; color: var(--ink-soft); }
 
 .header-actions { display: flex; flex-direction: column; gap: 12px; }
+
+/* 字号调节 */
+.textsize { display: flex; flex-direction: column; gap: 8px; }
+.textsize-label { font-size: 1rem; font-weight: 800; color: var(--ink-soft); }
+.textsize-btns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.ts-btn {
+  min-height: 60px;
+  padding: 0 10px;
+  font-size: .95rem;
+  font-weight: 800;
+  border-radius: var(--r-md);
+  border: 3px solid #D8CEB6;
+  background: #FFFFFF;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: all .14s ease;
+}
+.ts-btn:hover { transform: translateY(-2px); }
+.ts-btn.is-on { background: #6B4E00; border-color: #4A3500; color: #FFF8E8; }
 
 /* ---------- 通知栏 ---------- */
 .notice-bar {
@@ -228,7 +269,7 @@ button { font-family: inherit; }
 .stage-track li {
   text-align: center; font-size: 1rem; font-weight: 700;
   padding: 10px 4px; border-radius: var(--r-sm);
-  background: #F3EEDF; color: #8A8266; border: 2px solid transparent;
+  background: #F3EEDF; color: var(--ink-mute); border: 2px solid transparent;
 }
 .stage-track li.done { background: #E4F4DE; color: var(--good); }
 .stage-track li.now { background: #FFF0C4; color: #7A5300; border-color: #E4B44B; transform: scale(1.05); }
@@ -398,6 +439,8 @@ button { font-family: inherit; }
   background: #fff; color: var(--danger); border: 3px solid #E8B4B4; border-radius: var(--r-md); cursor: pointer;
 }
 .mini-btn:hover { background: #FFF1F1; }
+.mini-btn-edit { color: #0B5D86; border-color: #9FC7EE; }
+.mini-btn-edit:hover { background: #EAF4FF; }
 
 /* ---------- 子女设置面板 ---------- */
 .composer {
@@ -519,8 +562,8 @@ button { font-family: inherit; }
   animation: rise .5s ease both;
 }
 .medal .m-emoji { font-size: 2.2rem; }
-.medal.locked { border-color: #D8CEB6; color: #8A8266; opacity: .78; }
-.medal small { display: block; font-size: .95rem; font-weight: 700; color: #8A8266; }
+.medal.locked { border-color: #D8CEB6; color: var(--ink-mute); }
+.medal small { display: block; font-size: .95rem; font-weight: 700; color: var(--ink-mute); }
 .poster-tip {
   margin: 18px 0 0; padding: 16px; font-size: 1.1rem; font-weight: 800; color: #0B4E7C;
   background: #EAF4FF; border: 3px dashed #79C7EA; border-radius: var(--r-md); position: relative;

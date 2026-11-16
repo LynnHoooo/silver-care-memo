@@ -10,6 +10,8 @@
 </head>
 <body data-mode="elder">
 
+  <a class="skip-link" href="#board">跳到今日备忘卡片</a>
+
   <main id="app" class="app" aria-label="岁岁念主界面">
 
     <header class="app-header">
@@ -31,6 +33,15 @@
       <div class="header-actions">
         <button type="button" class="btn btn-award" id="reportBtn">🏆 年度亲情战绩报告</button>
         <button type="button" class="btn btn-primary only-child" id="composerBtn" hidden>➕ 给爸妈设置提醒</button>
+
+        <div class="textsize" role="group" aria-label="字号大小">
+          <span class="textsize-label">🔎 字号</span>
+          <div class="textsize-btns">
+            <button type="button" class="ts-btn is-on" data-size="normal" aria-pressed="true">标准</button>
+            <button type="button" class="ts-btn" data-size="large" aria-pressed="false">大</button>
+            <button type="button" class="ts-btn" data-size="xlarge" aria-pressed="false">特大</button>
+          </div>
+        </div>
       </div>
     </header>
 
@@ -79,7 +90,7 @@
     </nav>
 
     <section class="composer only-child" id="composer" hidden aria-label="子女守护设置面板">
-      <h2 class="composer-title">🧑 远程为爸妈添加一张大卡片</h2>
+      <h2 class="composer-title" id="composerTitle">🧑 远程为爸妈添加一张大卡片</h2>
 
       <p class="field-label">① 先选种类</p>
       <div class="cat-pick" id="catPick" role="group" aria-label="卡片种类"></div>
@@ -101,7 +112,7 @@
       <p class="board-count" id="boardCount"></p>
     </div>
 
-    <main class="board" id="board"></main>
+    <main class="board" id="board" tabindex="-1"></main>
     <p class="board-empty" id="boardEmpty" hidden>这个分类还没有卡片，切到「🧑 子女守护模式」为爸妈加一张吧。</p>
 
     <footer class="app-footer">
