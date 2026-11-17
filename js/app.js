@@ -95,6 +95,25 @@
     { at: 1600, icon: 'ic-fruit', label: '硕果累累' },
   ];
 
+  /* 紧急求助信息：子女填一次，长辈侧大字展示并可朗读 */
+  const EMG_FIELDS = [
+    { key: 'contact', label: '紧急联系人', placeholder: '例如：女儿 · 林小满' },
+    { key: 'phone', label: '联系电话', placeholder: '例如：138 0000 1234', tel: true },
+    { key: 'address', label: '家庭住址', placeholder: '例如：阳光社区 3 号楼 502 室' },
+    { key: 'blood', label: '血型', placeholder: '例如：A 型' },
+    { key: 'meds', label: '正在服用的药', placeholder: '例如：降压药 氨氯地平 5 毫克' },
+    { key: 'history', label: '过敏与既往情况', placeholder: '例如：青霉素过敏 · 高血压 8 年' },
+  ];
+
+  const seedEmergency = () => ({
+    contact: '女儿 · 林小满',
+    phone: '138 0000 1234',
+    address: '阳光社区 3 号楼 502 室',
+    blood: 'A 型',
+    meds: '降压药 氨氯地平 5 毫克 · 钙片 + 维生素D',
+    history: '青霉素过敏 · 高血压 8 年',
+  });
+
   const MEDALS = [
     { emoji: '🌟', name: '坚持打卡新星', need: s => s.tasks >= 1, hint: '完成第 1 次打卡' },
     { emoji: '💪', name: '生活有节奏达人', need: s => s.tasks >= 3, hint: '累计完成 3 次打卡' },
@@ -108,10 +127,9 @@
 
   /* ============ 状态存取 ============ */
 
-  const todayKey = () => {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-  };
+  const pad2 = n => String(n).padStart(2, '0');
+  const dayKey = d => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+  const todayKey = () => dayKey(new Date());
 
   const uid = () => 'c' + Date.now().toString(36) + Math.floor(Math.random() * 1e4).toString(36);
 
@@ -124,6 +142,7 @@
       stats: { childSetups: 0, messages: 0 },
       checkins: [],
       feed: [],
+      emergency: seedEmergency(),
       cards: [
         { id: uid(), type: 'medicine', source: 'child', heading: '氨氯地平 5 毫克', line2: '每次 1 片 · 早饭后半小时温水送服', line3: '今天 08:00', done: false, doneAt: null },
         { id: uid(), type: 'phone', source: 'child', heading: '女儿 · 林小满', phone: '138 0000 1234', line2: '晚 7 点到 9 点', line3: '今天 19:30', done: false, doneAt: null },
@@ -155,6 +174,7 @@
     s.checkins = s.checkins || [];
     s.feed = s.feed || [];
     s.cards = s.cards || [];
+    s.emergency = Object.assign(seedEmergency(), s.emergency || {});
     s.mode = s.mode === 'child' ? 'child' : 'elder';
     s.textSize = TEXT_SIZES[s.textSize] ? s.textSize : 'normal';
     if (s.day !== todayKey()) {
@@ -317,6 +337,28 @@
         console.warn('语音播报失败', err);
       }
     },
+    /* 多段顺序朗读：speechSynthesis 本身会排队，所以这里只在开头 cancel 一次 */
+    saySeq(list, onDone) {
+      if (!this.supported) { toast('这个浏览器不支持语音朗读，已用文字提示代替'); return false; }
+      try {
+        window.speechSynthesis.cancel();
+        list.forEach((text, i) => {
+          const u = new SpeechSynthesisUtterance(text);
+          u.lang = 'zh-CN';
+          u.rate = 0.8;
+          u.pitch = 1.0;
+          u.volume = 1;
+          const v = this.zhVoice();
+          if (v) u.voice = v;
+          if (i === list.length - 1 && onDone) { u.onend = onDone; u.onerror = onDone; }
+          window.speechSynthesis.speak(u);
+        });
+        return true;
+      } catch (err) {
+        console.warn('连续朗读失败', err);
+        return false;
+      }
+    },
   };
   if (voice.supported) {
     window.speechSynthesis.getVoices();
@@ -337,6 +379,178 @@
   function readablePhone(phone) {
     if (!phone) return '暂未填写';
     return String(phone).replace(/\D/g, '').split('').map(d => ({ '0': '零', '1': '一', '2': '二', '3': '三', '4': '四', '5': '五', '6': '六', '7': '七', '8': '八', '9': '九' }[d])).join(' ');
+  }
+
+  /* ============ 今日概览 · 连续天数 · 一键播报 ============ */
+
+  /* 今天还没打卡时从昨天往前数：否则白天打开永远显示 0 天，等于惩罚还没做的人 */
+  function streakDays() {
+    const days = new Set(state.checkins.map(c => dayKey(new Date(c.at))));
+    const d = new Date();
+    if (!days.has(dayKey(d))) d.setDate(d.getDate() - 1);
+    let n = 0;
+    while (days.has(dayKey(d))) {
+      n += 1;
+      d.setDate(d.getDate() - 1);
+    }
+    return n;
+  }
+
+  function streakText(n) {
+    if (n <= 0) return '还没有打卡记录，办妥一张就从今天开始';
+    if (n === 1) return '今天是坚持的第 1 天，明天继续就成串啦';
+    return `已连续坚持 ${n} 天，花园陪您走了 ${n} 天`;
+  }
+
+  function renderSummary() {
+    const total = state.cards.length;
+    const done = state.cards.filter(c => c.done).length;
+    $('#sumTotal').textContent = String(total);
+    $('#sumDone').textContent = String(done);
+    $('#sumStreak').textContent = streakText(streakDays());
+  }
+
+  let todaySpeaking = false;
+
+  function setSpeakLabel() {
+    $('#speakAllLabel').textContent = todaySpeaking ? '别念了，停下' : '把今天的事念给我听';
+    $('#speakAllBtn').setAttribute('aria-pressed', String(todaySpeaking));
+  }
+
+  function speakToday() {
+    if (todaySpeaking) { stopSpeakToday(); return; }
+    const pending = state.cards.filter(c => !c.done);
+    const d = new Date();
+    const head = `今天是 ${d.getMonth() + 1} 月 ${d.getDate()} 日，一共有 ${state.cards.length} 件事，已经办妥 ${state.cards.length - pending.length} 件。`;
+    const list = pending.length
+      ? [head].concat(pending.map(c => cardSpeechText(c)))
+      : [head, '今天的事全部办妥啦，一件不落，孩子们看到一定特别放心。'];
+    todaySpeaking = true;
+    setSpeakLabel();
+    if (!voice.saySeq(list, () => { todaySpeaking = false; setSpeakLabel(); })) {
+      todaySpeaking = false;
+      setSpeakLabel();
+      return;
+    }
+    toast(pending.length ? `正在按顺序念 ${pending.length} 件还没办妥的事，再点一次按钮可停下` : '今天的事都办妥啦，给您念一句总结');
+  }
+
+  function stopSpeakToday() {
+    if (voice.supported) window.speechSynthesis.cancel();
+    todaySpeaking = false;
+    setSpeakLabel();
+    toast('已停止朗读');
+  }
+
+  /* 演示用：示例数据只有今天，连续天数与年度战绩需要一个"过去几天"才看得出效果。
+     补的是真实结构的历史打卡（同样 +100 能量），所以战绩、能量、花园、streak 口径一致。 */
+  function seedHistoryDemo() {
+    const med = state.cards.find(c => c.type === 'medicine');
+    let added = 0;
+    for (let back = 1; back <= 3; back += 1) {
+      const d = new Date();
+      d.setDate(d.getDate() - back);
+      const key = dayKey(d);
+      if (state.checkins.some(c => dayKey(new Date(c.at)) === key)) continue;
+      d.setHours(8, 30, 0, 0);
+      state.checkins.push({
+        cardId: med ? med.id : 'demo',
+        type: 'medicine',
+        at: d.toISOString(),
+        heading: med ? med.heading : '按时吃药',
+      });
+      addEnergy(ENERGY_PER_CHECKIN);
+      added += 1;
+    }
+    if (!added) { toast('最近三天已经有打卡记录了，不需要再补'); return; }
+    save();
+    render();
+    toast(`已补上 ${added} 天的示例吃药打卡，连续天数与年度战绩都会跟着变`);
+  }
+
+  /* ============ 紧急求助信息 ============ */
+
+  function spacedPhone(v) {
+    const digits = String(v).replace(/\D/g, '');
+    return digits.length === 11 ? `${digits.slice(0, 3)} ${digits.slice(3, 7)} ${digits.slice(7)}` : String(v);
+  }
+
+  function renderEmergencyView() {
+    const box = $('#emgList');
+    box.innerHTML = '';
+    EMG_FIELDS.forEach(f => {
+      const raw = (state.emergency[f.key] || '').trim();
+      const row = el('div', 'emg-row' + (raw ? '' : ' is-empty'));
+      row.appendChild(el('dt', 'emg-label', f.label));
+      row.appendChild(el('dd', 'emg-value', raw ? (f.tel ? spacedPhone(raw) : raw) : '未填写 · 请在子女守护模式补充'));
+      box.appendChild(row);
+    });
+  }
+
+  function emergencySpeechText() {
+    const e = state.emergency;
+    const parts = ['这是本机保存的紧急求助信息，请给身边的人听。'];
+    parts.push(`紧急联系人 ${e.contact || '暂未填写'}。`);
+    parts.push(`联系电话 ${readablePhone(e.phone)}。`);
+    if (e.address) parts.push(`家庭住址 ${e.address}。`);
+    if (e.blood) parts.push(`血型 ${e.blood}。`);
+    if (e.meds) parts.push(`正在服用的药 ${e.meds}。`);
+    if (e.history) parts.push(`过敏与既往情况 ${e.history}。`);
+    parts.push('请把电话拨给紧急联系人，谢谢。');
+    return parts.join('');
+  }
+
+  let emgDraft = null;
+
+  function renderEmergencyRows() {
+    const box = $('#emgRows');
+    box.innerHTML = '';
+    EMG_FIELDS.forEach(f => {
+      const lab = el('label');
+      lab.appendChild(el('span', null, f.label));
+      const input = document.createElement('input');
+      input.type = f.tel ? 'tel' : 'text';
+      input.placeholder = f.placeholder;
+      input.value = emgDraft[f.key] || '';
+      if (f.tel) input.inputMode = 'tel';
+      input.addEventListener('input', () => { emgDraft[f.key] = input.value; });
+      lab.appendChild(input);
+      box.appendChild(lab);
+    });
+  }
+
+  function showEmergencyPane(edit) {
+    $('#emgView').hidden = edit;
+    $('#emgEdit').hidden = !edit;
+    if (edit) {
+      emgDraft = Object.assign({}, state.emergency);
+      renderEmergencyRows();
+    } else {
+      renderEmergencyView();
+    }
+  }
+
+  function openEmergency(edit) {
+    const wantEdit = edit === undefined ? state.mode === 'child' : edit;
+    showEmergencyPane(wantEdit);
+    const overlay = $('#emergencyOverlay');
+    const target = wantEdit ? $('#emgRows input') : $('#emgSpeakBtn');
+    if (overlay.hidden) showOverlay(overlay, target);
+    else if (target) target.focus();
+  }
+
+  function closeEmergency() {
+    if (voice.supported) window.speechSynthesis.cancel();
+    hideOverlay($('#emergencyOverlay'));
+  }
+
+  function saveEmergency() {
+    EMG_FIELDS.forEach(f => { state.emergency[f.key] = (emgDraft[f.key] || '').trim(); });
+    pushFeed('setup', '您更新了爸妈的紧急求助信息');
+    save();
+    showEmergencyPane(false);
+    $('#emgSpeakBtn').focus();
+    toast('紧急求助信息已保存，父母那边用大字显示');
   }
 
   /* ============ 音效（WebAudio 提示音） ============ */
@@ -423,14 +637,61 @@
     return Math.max(3, Math.round(((energy - cur) / (next - cur)) * 100));
   }
 
-  let lastStage = stageIndex(state.energy);
+  /* ============ 一次性动效 ============ */
 
-  function renderGarden(levelUpAnimation) {
+  // 卡片错峰入场：只在首屏、筛选切换、视角切换时播；打卡/保存等数据刷新不重播，
+  // 否则每点一次「我办妥了」四张卡都会重新跳一遍。
+  let enterTimer = null;
+  function playEntrance() {
+    if (reduced()) return;
+    const board = $('#board');
+    clearTimeout(enterTimer);
+    board.classList.remove('is-entering');
+    void board.offsetWidth;
+    board.classList.add('is-entering');
+    enterTimer = setTimeout(() => board.classList.remove('is-entering'), 900);
+  }
+
+  // 能量数字滚动：目标值立刻写进 aria-valuetext，读屏听到的始终是最终值
+  let energyShown = state.energy;
+  let energyRaf = null;
+  let energySnap = null;
+  function showEnergy(target) {
+    const node = $('#energyNum');
+    cancelAnimationFrame(energyRaf);
+    clearTimeout(energySnap);
+    if (reduced() || document.hidden || energyShown === target) {
+      energyShown = target;
+      node.textContent = target;
+      return;
+    }
+    const from = energyShown;
+    const t0 = performance.now();
+    const step = now => {
+      const k = Math.min(1, (now - t0) / 620);
+      energyShown = Math.round(from + (target - from) * (1 - Math.pow(1 - k, 3)));
+      node.textContent = energyShown;
+      if (k < 1) energyRaf = requestAnimationFrame(step);
+    };
+    energyRaf = requestAnimationFrame(step);
+    // rAF 在后台标签页或被节流的窗口里可能一帧都不回调，兜底把数字钉到目标值
+    energySnap = setTimeout(() => {
+      cancelAnimationFrame(energyRaf);
+      energyShown = target;
+      node.textContent = target;
+    }, 760);
+  }
+
+  let lastStage = stageIndex(state.energy);
+  // 升级标记由 addEnergy 置位、renderGarden 消费：跨标签页同步等外部更新不会误播动画
+  let pendingLevelUp = false;
+
+  function renderGarden() {
     const energy = state.energy;
     const i = stageIndex(energy);
     const st = STAGES[i];
 
-    $('#energyNum').textContent = energy;
+    showEnergy(energy);
     const pct = stageProgress(energy);
     $('#energyFill').style.width = pct + '%';
     const bar = $('#energyBar');
@@ -451,12 +712,18 @@
       li.classList.toggle('now', n === i);
     });
 
-    if (levelUpAnimation && i > lastStage) {
+    if (pendingLevelUp && i > lastStage) {
       const scene = $('#plantScene');
       scene.classList.add('level-up');
       setTimeout(() => scene.classList.remove('level-up'), 1000);
+      const nowLi = $('#stageTrack').querySelector('li.now');
+      if (nowLi) {
+        nowLi.classList.add('is-pop');
+        setTimeout(() => nowLi.classList.remove('is-pop'), 700);
+      }
       rainParticles(14);
     }
+    pendingLevelUp = false;
     lastStage = i;
   }
 
@@ -464,7 +731,9 @@
     const before = stageIndex(state.energy);
     state.energy += n;
     const after = stageIndex(state.energy);
-    return after > before ? STAGES[after].label : null;
+    if (after <= before) return null;
+    pendingLevelUp = true;
+    return STAGES[after].label;
   }
 
   /* ============ 打卡 ============ */
@@ -954,9 +1223,6 @@
     $('#modeElder').setAttribute('aria-pressed', String(elder));
     $('#modeChild').setAttribute('aria-pressed', String(!elder));
     $('#modeLabel').textContent = elder ? '当前视角：长辈卡片模式' : '当前视角：子女守护模式';
-    $('#modeTip').textContent = elder
-      ? '大图标、大按钮，只需两下手指就能听完、办妥。'
-      : '您可以远程加卡片、看父母刚完成的打卡动态。';
     $('#noticeBar').hidden = elder;
     $('#composerBtn').hidden = elder || !$('#composer').hidden;
     if (elder) closeComposer();
@@ -975,9 +1241,10 @@
 
   function render() {
     syncTabs();
-    renderGarden(false);
+    renderGarden();
     renderBoard();
     renderNotice();
+    renderSummary();
   }
 
   function renderHeader() {
@@ -989,12 +1256,12 @@
   /* ============ 事件绑定 ============ */
 
   $('#modeElder').addEventListener('click', () => {
-    applyMode('elder'); render();
+    applyMode('elder'); render(); playEntrance();
     voice.say('已切换到长辈卡片模式，卡片上的大字一看就明白。', 0.9);
   });
 
   $('#modeChild').addEventListener('click', () => {
-    applyMode('child'); render();
+    applyMode('child'); render(); playEntrance();
     toast('子女守护模式：可远程加卡片、查看父母打卡动态（通知栏已打开）');
   });
 
@@ -1006,18 +1273,29 @@
   $('#saveCardBtn').addEventListener('click', saveComposerCard);
   $('#hangupBtn').addEventListener('click', endCall);
 
+  $('#speakAllBtn').addEventListener('click', speakToday);
+  $('#emergencyBtn').addEventListener('click', () => openEmergency());
+  $('#emgSpeakBtn').addEventListener('click', () => voice.say(emergencySpeechText(), 0.8));
+  $('#emgEditBtn').addEventListener('click', () => openEmergency(true));
+  $('#emgCloseBtn').addEventListener('click', closeEmergency);
+  $('#emgSaveBtn').addEventListener('click', saveEmergency);
+  $('#emgBackBtn').addEventListener('click', () => showEmergencyPane(false));
+  $('#historyBtn').addEventListener('click', seedHistoryDemo);
+
   document.querySelectorAll('.ts-btn').forEach(b => {
     b.addEventListener('click', () => applyTextSize(b.dataset.size, true));
   });
 
   $('#callOverlay').addEventListener('keydown', e => trapTab(e, $('#callOverlay')));
   $('#reportOverlay').addEventListener('keydown', e => trapTab(e, $('#reportOverlay')));
+  $('#emergencyOverlay').addEventListener('keydown', e => trapTab(e, $('#emergencyOverlay')));
 
   document.querySelectorAll('.filter-tabs .tab').forEach(tab => {
     tab.addEventListener('click', () => {
       filter = tab.dataset.filter;
       syncTabs();
       renderBoard();
+      playEntrance();
     });
   });
 
@@ -1042,10 +1320,12 @@
     if (e.key !== 'Escape') return;
     if (!$('#callOverlay').hidden) endCall();
     else if (!$('#reportOverlay').hidden) closeReport();
+    else if (!$('#emergencyOverlay').hidden) closeEmergency();
   });
 
   $('#callOverlay').addEventListener('click', e => { if (e.target === $('#callOverlay')) endCall(); });
   $('#reportOverlay').addEventListener('click', e => { if (e.target === $('#reportOverlay')) closeReport(); });
+  $('#emergencyOverlay').addEventListener('click', e => { if (e.target === $('#emergencyOverlay')) closeEmergency(); });
 
   window.addEventListener('storage', e => {
     if (e.key !== STORE_KEY) return;
@@ -1061,6 +1341,7 @@
   applyTextSize(state.textSize, false);
   applyMode(state.mode);
   render();
+  playEntrance();
 
   setInterval(() => rolloverIfNewDay(true), 30000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) rolloverIfNewDay(true); });

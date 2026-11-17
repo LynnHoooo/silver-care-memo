@@ -75,14 +75,17 @@ body {
   padding: 26px 26px 60px;
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
-  grid-template-areas: "hd gd";
+  grid-template-areas:
+    "tt tt"
+    "hd gd";
   gap: var(--gap);
   align-items: stretch;
 }
-/* 顶部两板块左右并排，其余分区仍占满整行 */
+/* 第一行是整行页面标题，第二行才是左设置 / 右花园 */
+.page-head { grid-area: tt; }
 .app-header { grid-area: hd; }
 .garden { grid-area: gd; }
-.app > :not(.app-header):not(.garden) { grid-column: 1 / -1; }
+.app > :not(.page-head):not(.app-header):not(.garden) { grid-column: 1 / -1; }
 
 h1, h2, h3 { margin: 0; line-height: 1.3; letter-spacing: .01em; }
 
@@ -141,7 +144,20 @@ button { font-family: inherit; }
 }
 .skip-link:focus { transform: translate(-50%, 0); }
 
-/* ---------- 顶部 ---------- */
+/* ---------- 页面标题：整行置顶，直接坐在纸纹底上，不套卡片 ---------- */
+.page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 20px;
+  padding: 0 4px;
+}
+.brand-title { display: flex; align-items: center; gap: 12px; font-size: 2.1rem; color: var(--accent); }
+.ic-brand { width: 44px; height: 44px; }
+.brand-sub { margin: 0; font-size: 1.1rem; font-weight: 700; color: var(--ink-soft); }
+.brand-date { margin: 0 0 0 auto; font-size: 1.05rem; color: var(--ink-soft); }
+
+/* ---------- 设置区（左）与花园区（右）并排 ---------- */
 .app-header {
   background: var(--bg-soft);
   border: var(--bw) solid var(--line);
@@ -150,13 +166,10 @@ button { font-family: inherit; }
   display: grid;
   grid-template-columns: 1fr;
   gap: 20px;
-  align-content: start;
+  /* 品牌标题移到整行置顶后，本卡片只剩视角与操作两组；随花园等高拉伸时让它们分别贴住上下缘 */
+  align-content: space-between;
   box-shadow: var(--shadow);
 }
-.brand-title { display: flex; align-items: center; gap: 12px; font-size: 2.1rem; color: var(--accent); }
-.ic-brand { width: 44px; height: 44px; }
-.brand-sub { margin: 4px 0 0; font-size: 1.1rem; font-weight: 700; color: var(--ink-soft); }
-.brand-date { margin: 12px 0 0; font-size: 1.05rem; color: var(--ink-soft); }
 
 .mode-area { display: flex; flex-direction: column; gap: 12px; }
 .mode-label { margin: 0; font-size: 1.1rem; font-weight: 800; }
@@ -185,7 +198,30 @@ button { font-family: inherit; }
   color: #FFF8E8;
   border-color: var(--accent);
 }
-.mode-tip { margin: 0; font-size: 1rem; color: var(--ink-soft); }
+
+/* ---------- 左栏：今日概览与紧急求助 ---------- */
+.today-summary {
+  background: var(--bg-card);
+  border: var(--bw) solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.sum-count { margin: 0; font-size: 1.25rem; font-weight: 800; color: var(--ink); }
+.sum-num { font-size: 1.7rem; color: var(--accent); font-variant-numeric: tabular-nums; }
+.sum-streak { margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--good); }
+.btn-speak { width: 100%; }
+.btn-emergency {
+  width: 100%;
+  min-height: 72px;
+  font-size: 1.35rem;
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #FFFFFF;
+}
+.btn-emergency .ic { width: 1.15em; height: 1.15em; }
 
 .header-actions { display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: flex-end; }
 
@@ -304,7 +340,10 @@ button { font-family: inherit; }
   text-align: center; font-size: 1rem; font-weight: 700;
   padding: 10px 4px; border-radius: var(--r-sm);
   background: var(--bg-card); color: var(--ink-mute); border: var(--bw) solid transparent;
+  transition: background .3s ease, color .3s ease, border-color .3s ease;
 }
+/* 阶段刚跨过阈值时，当前格做一次性的轻微回弹（播完即摘 class，不常驻） */
+.stage-track li.is-pop { animation: track-pop .55s ease; }
 .stage-track .ic { width: 22px; height: 22px; }
 .stage-track li.done { background: var(--soft-good); color: var(--good); }
 .stage-track li.now { background: var(--soft-warm); color: var(--accent); border-color: #D9BC7E; font-weight: 800; }
@@ -350,6 +389,15 @@ button { font-family: inherit; }
   grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
   gap: 26px;
 }
+
+/* 错峰入场：由 JS 在首屏 / 筛选切换 / 视角切换时挂 is-entering，播完即摘。
+   打卡、保存卡片等数据刷新不重挂，所以不会每点一次按钮整屏重跳一遍。 */
+.board.is-entering .card { animation: rise .46s ease backwards; }
+.board.is-entering .card:nth-child(2) { animation-delay: .06s; }
+.board.is-entering .card:nth-child(3) { animation-delay: .12s; }
+.board.is-entering .card:nth-child(4) { animation-delay: .18s; }
+.board.is-entering .card:nth-child(5) { animation-delay: .24s; }
+.board.is-entering .card:nth-child(n+6) { animation-delay: .3s; }
 
 .card {
   position: relative;
@@ -605,6 +653,44 @@ button { font-family: inherit; }
 .poster.poster-mode .poster-actions { display: none; }
 .poster.poster-mode { border-color: var(--c-message); }
 
+/* ---------- 紧急求助弹窗 ---------- */
+.emg-card {
+  background: var(--bg-card);
+  border: var(--bw-lg) solid var(--line-strong);
+  border-radius: var(--r-xl);
+  padding: 28px 30px;
+  width: min(760px, 100%);
+  max-height: 88vh;
+  overflow: auto;
+  box-shadow: var(--shadow-lg);
+}
+.emg-view, .emg-edit { display: flex; flex-direction: column; gap: 16px; }
+.emg-kicker { margin: 0; font-size: 1.15rem; font-weight: 800; color: var(--danger); }
+.emg-title { font-size: 1.7rem; color: var(--ink); }
+.emg-desc { margin: 0; font-size: 1.05rem; color: var(--ink-soft); }
+.emg-list { margin: 0; display: flex; flex-direction: column; gap: 12px; }
+.emg-row {
+  display: grid;
+  grid-template-columns: minmax(140px, 190px) minmax(0, 1fr);
+  gap: 6px 20px;
+  align-items: baseline;
+  padding: 16px 20px;
+  border-radius: var(--r-md);
+  background: var(--bg-soft);
+  border: var(--bw) solid var(--line);
+}
+.emg-label { font-size: 1.05rem; font-weight: 800; color: var(--ink-mute); }
+.emg-value {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.emg-row.is-empty .emg-value { font-size: 1.1rem; font-weight: 700; color: var(--ink-mute); }
+.emg-note { margin: 0; font-size: 1rem; color: var(--ink-mute); }
+.emg-actions { display: flex; flex-wrap: wrap; gap: 14px; }
+
 /* ---------- 提示条 & 粒子 ---------- */
 .toast {
   position: fixed;
@@ -648,6 +734,7 @@ button { font-family: inherit; }
   100% { transform: scale(1) rotate(-14deg); opacity: 1; }
 }
 @keyframes rise { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes track-pop { 0% { transform: scale(.92); } 55% { transform: scale(1.05); } 100% { transform: scale(1); } }
 @keyframes slide-in { from { transform: translateX(-14px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes pulse { 0% { transform: scale(.85); opacity: .55; } 100% { transform: scale(1.45); opacity: 0; } }
@@ -666,9 +753,11 @@ body[data-mode="child"] .only-elder { display: none !important; }
   .app {
     grid-template-columns: 1fr;
     grid-template-areas:
+      "tt"
       "hd"
       "gd";
   }
+  .brand-date { margin-left: 0; }
 }
 @media (max-width: 720px) {
   .app { padding: 18px 16px 40px; }
@@ -676,6 +765,8 @@ body[data-mode="child"] .only-elder { display: none !important; }
   .card-actions { grid-template-columns: 1fr; }
   .card-actions.is-phone .act-call { grid-column: 1; }
   .stage-track { grid-template-columns: 1fr 1fr; }
+  .emg-row { grid-template-columns: 1fr; }
+  .emg-card { padding: 22px 20px; }
 }
 
 /* ---------- 减少动效偏好 ---------- */

@@ -92,6 +92,11 @@
         <circle cx="16" cy="16" r="13" fill="currentColor" opacity=".22"/>
         <path d="M9.4 16.6l4.4 4.4 8.6-9.4" stroke="currentColor" stroke-width="3.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
       </symbol>
+
+      <symbol id="ic-alert" viewBox="0 0 32 32">
+        <rect x="4" y="4" width="24" height="24" rx="8" fill="currentColor" opacity=".24"/>
+        <path d="M16 9.4v13.2M9.4 16h13.2" stroke="currentColor" stroke-width="3.8" stroke-linecap="round"/>
+      </symbol>
     </defs>
   </svg>
 
@@ -99,21 +104,32 @@
 
   <main id="app" class="app" aria-label="岁岁念主界面">
 
-    <header class="app-header">
-      <div class="brand">
-        <h1 class="brand-title"><svg class="ic ic-brand"><use href="#ic-logo"/></svg>岁岁念</h1>
-        <p class="brand-sub">卡片式银发温情备忘录</p>
-        <p class="brand-date" id="todayLine">今天是 ——</p>
-      </div>
+    <header class="page-head">
+      <h1 class="brand-title"><svg class="ic ic-brand"><use href="#ic-logo"/></svg>岁岁念</h1>
+      <p class="brand-sub">卡片式银发温情备忘录</p>
+      <p class="brand-date" id="todayLine">今天是 ——</p>
+    </header>
 
+    <section class="app-header" aria-label="常用设置">
       <div class="mode-area">
         <p class="mode-label" id="modeLabel">当前视角：长辈卡片模式</p>
         <div class="mode-switch" role="group" aria-label="视角切换">
           <button type="button" class="mode-btn is-on" id="modeElder" aria-pressed="true">👵 长辈卡片模式</button>
           <button type="button" class="mode-btn" id="modeChild" aria-pressed="false">🧑 子女守护模式</button>
         </div>
-        <p class="mode-tip" id="modeTip">大图标、大按钮，只需两下手指就能听完、办妥。</p>
       </div>
+
+      <section class="today-summary only-elder" aria-label="今日概览">
+        <p class="sum-count">今天 <span class="sum-num" id="sumTotal">4</span> 件事 · 已办妥 <span class="sum-num" id="sumDone">0</span> 件</p>
+        <p class="sum-streak" id="sumStreak">还没有打卡记录，办妥一张就从今天开始</p>
+        <button type="button" class="btn btn-speak" id="speakAllBtn" aria-pressed="false">
+          <svg class="ic"><use href="#ic-sound"/></svg><span id="speakAllLabel">把今天的事念给我听</span>
+        </button>
+      </section>
+
+      <button type="button" class="btn btn-emergency" id="emergencyBtn">
+        <svg class="ic"><use href="#ic-alert"/></svg><span class="only-elder">我不舒服</span><span class="only-child">设置紧急求助信息</span>
+      </button>
 
       <div class="header-actions">
         <button type="button" class="btn btn-award" id="reportBtn">年度亲情战绩报告</button>
@@ -128,7 +144,7 @@
           </div>
         </div>
       </div>
-    </header>
+    </section>
 
     <section class="notice-bar only-child" id="noticeBar" hidden aria-live="polite" aria-label="安心动态通知栏">
       <div class="notice-head">
@@ -204,6 +220,7 @@
       <p>纯前端运行，所有卡片与打卡进度只保存在本机浏览器（localStorage）；语音由浏览器内置朗读，无需联网、不上传任何信息。</p>
       <div class="foot-tools">
         <button type="button" class="btn btn-ghost btn-small" id="speakTestBtn">试一下语音</button>
+        <button type="button" class="btn btn-ghost btn-small" id="historyBtn">补一段上周打卡（演示）</button>
         <button type="button" class="btn btn-ghost btn-small" id="resetBtn">恢复示例数据</button>
       </div>
     </footer>
@@ -248,6 +265,34 @@
         <button type="button" class="btn btn-ghost" id="reportCloseBtn">关闭</button>
         <button type="button" class="btn btn-award" id="posterSaveBtn">生成纪念海报提示</button>
       </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="emergencyOverlay" hidden>
+    <div class="emg-card" role="dialog" aria-modal="true" aria-labelledby="emgTitle">
+
+      <div class="emg-view" id="emgView">
+        <p class="emg-kicker">请把下面这些给身边的人看</p>
+        <h2 class="emg-title" id="emgTitle">紧急求助信息</h2>
+        <dl class="emg-list" id="emgList"></dl>
+        <p class="emg-note">这些信息只保存在本机浏览器里，不会上传到任何地方。</p>
+        <div class="emg-actions">
+          <button type="button" class="btn btn-primary" id="emgSpeakBtn">念给对方听</button>
+          <button type="button" class="btn btn-ghost only-child" id="emgEditBtn">修改这些信息</button>
+          <button type="button" class="btn btn-ghost" id="emgCloseBtn">关闭</button>
+        </div>
+      </div>
+
+      <div class="emg-edit" id="emgEdit" hidden>
+        <h2 class="emg-title">为爸妈填写紧急求助信息</h2>
+        <p class="emg-desc">填一次就长期有效；父母侧用大字显示，也能一键念给对方听。只保存在本机浏览器。</p>
+        <div class="field-rows" id="emgRows"></div>
+        <div class="emg-actions">
+          <button type="button" class="btn btn-primary" id="emgSaveBtn">保存</button>
+          <button type="button" class="btn btn-ghost" id="emgBackBtn">返回查看</button>
+        </div>
+      </div>
+
     </div>
   </div>
 
