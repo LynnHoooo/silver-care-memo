@@ -12,7 +12,7 @@
 
   const CATS = {
     medicine: {
-      name: '按时吃药', emoji: '💊', className: 'card-medicine',
+      name: '按时吃药', icon: 'ic-medicine', className: 'card-medicine',
       fields: [
         { key: 'heading', label: '药名', placeholder: '例如：氨氯地平 5 毫克' },
         { key: 'line2', label: '剂量与叮嘱', placeholder: '例如：每次 1 片，早饭后半小时温水送服' },
@@ -30,7 +30,7 @@
       ],
     },
     phone: {
-      name: '亲友电话', emoji: '📞', className: 'card-phone',
+      name: '亲友电话', icon: 'ic-phone', className: 'card-phone',
       fields: [
         { key: 'heading', label: '亲友称呼', placeholder: '例如：女儿 · 小满' },
         { key: 'phone', label: '电话号码', placeholder: '例如：138 0000 1234' },
@@ -48,7 +48,7 @@
       ],
     },
     travel: {
-      name: '出行提醒', emoji: '🚌', className: 'card-travel',
+      name: '出行提醒', icon: 'ic-travel', className: 'card-travel',
       fields: [
         { key: 'heading', label: '去哪儿', placeholder: '例如：社区医院 · 复查血压' },
         { key: 'line3', label: '出发时间', placeholder: '例如：明天上午 9:30' },
@@ -66,7 +66,7 @@
       ],
     },
     message: {
-      name: '给孩子的留言', emoji: '💌', className: 'card-message',
+      name: '给孩子的留言', icon: 'ic-message', className: 'card-message',
       fields: [
         { key: 'heading', label: '留言卡标题', placeholder: '例如：想对孩子说点什么' },
       ],
@@ -89,10 +89,10 @@
   ];
 
   const STAGES = [
-    { at: 0, emoji: '🌱', label: '小嫩芽', deco: ['✨'] },
-    { at: 300, emoji: '🌷', label: '含苞待放', deco: ['🌿', '✨', '🌼'] },
-    { at: 800, emoji: '🌸', label: '繁花盛开', deco: ['🌼', '🦋', '✨', '🌸'] },
-    { at: 1600, emoji: '🌳', label: '硕果累累', deco: ['🍎', '🍇', '✨', '🍎', '🌸'] },
+    { at: 0, icon: 'ic-sprout', label: '小嫩芽' },
+    { at: 300, icon: 'ic-bud', label: '含苞待放' },
+    { at: 800, icon: 'ic-blossom', label: '繁花盛开' },
+    { at: 1600, icon: 'ic-fruit', label: '硕果累累' },
   ];
 
   const MEDALS = [
@@ -172,7 +172,7 @@
     save();
     if (announce) {
       render();
-      toast('🌅 新的一天，印章已清空，今天的卡片可以重新办理啦');
+      toast('新的一天，印章已清空，今天的卡片可以重新办理啦');
       voice.say('新的一天开始啦，昨天的印章已经收起，今天的卡片可以重新办理了。', 0.9);
     }
     return true;
@@ -189,6 +189,14 @@
 
   /* ============ 小工具 ============ */
 
+  const iconBtn = (cls, iconId, text) => {
+    const b = el('button', cls);
+    b.type = 'button';
+    b.appendChild(icon(iconId));
+    b.appendChild(document.createTextNode(text));
+    return b;
+  };
+
   const $ = sel => document.querySelector(sel);
   const el = (tag, cls, text) => {
     const n = document.createElement(tag);
@@ -198,6 +206,18 @@
   };
   const pick = arr => arr[Math.floor(Math.random() * arr.length)];
   const rand = (a, b) => a + Math.random() * (b - a);
+
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+  const icon = (id, cls) => {
+    const s = document.createElementNS(SVG_NS, 'svg');
+    s.setAttribute('class', cls ? `ic ${cls}` : 'ic');
+    s.setAttribute('aria-hidden', 'true');
+    s.setAttribute('focusable', 'false');
+    const u = document.createElementNS(SVG_NS, 'use');
+    u.setAttribute('href', '#' + id);
+    s.appendChild(u);
+    return s;
+  };
   const reduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   let toastTimer = null;
@@ -242,7 +262,7 @@
     });
     if (announce) {
       save();
-      toast(`🔎 字号已切到「${TEXT_SIZES[state.textSize]}」`);
+      toast(`字号已切到「${TEXT_SIZES[state.textSize]}」`);
       voice.say(`字号已经调整为${TEXT_SIZES[state.textSize]}，看看现在是不是更清楚了。`, 0.9);
     }
   }
@@ -282,7 +302,7 @@
       return vs.find(v => /^zh([-_]|$)/i.test(v.lang)) || vs.find(v => /Chinese|中文|普通话/i.test(v.name + v.lang)) || null;
     },
     say(text, rate = 0.82) {
-      if (!this.supported) { toast('🔇 这个浏览器不支持语音朗读，已用文字提示代替'); return; }
+      if (!this.supported) { toast('这个浏览器不支持语音朗读，已用文字提示代替'); return; }
       try {
         window.speechSynthesis.cancel();
         const u = new SpeechSynthesisUtterance(text);
@@ -353,9 +373,9 @@
 
   /* ============ 粒子庆祝 ============ */
 
-  const FX_EMOJI = ['🌸', '⭐', '✨', '🎉', '💐', '🍀', '❤️', '🌼'];
+  const FX_EMOJI = ['🌸', '⭐', '✨', '🍀'];
 
-  function rainParticles(count = 34) {
+  function rainParticles(count = 18) {
     if (reduced()) return;
     const layer = $('#fxLayer');
     for (let i = 0; i < count; i++) {
@@ -375,7 +395,7 @@
     if (reduced() || !node) return;
     const r = node.getBoundingClientRect();
     const layer = $('#fxLayer');
-    for (let i = 0; i < 14; i++) {
+    for (let i = 0; i < 9; i++) {
       const p = el('span', 'particle', pick(FX_EMOJI));
       p.style.left = (r.left + r.width / 2) + 'px';
       p.style.top = r.top + 'px';
@@ -417,21 +437,13 @@
     bar.setAttribute('aria-valuenow', String(pct));
     bar.setAttribute('aria-valuetext', `亲情能量 ${energy} 点，${st.label}`);
 
-    $('#plantMain').textContent = st.emoji;
+    const main = $('#plantMain');
+    main.replaceChildren(icon(st.icon));
+    $('#plantScene').dataset.stage = String(i);
     $('#plantStage').textContent = st.label;
 
-    const deco = $('#plantDeco');
-    deco.innerHTML = '';
-    st.deco.forEach((e, n) => {
-      const s = el('span', null, e);
-      s.style.left = [8, 76, 22, 62, 40][n % 5] + '%';
-      s.style.top = [12, 24, 58, 66, 2][n % 5] + '%';
-      s.style.animationDelay = (n * 0.35) + 's';
-      deco.appendChild(s);
-    });
-
     $('#energyNext').textContent = i === STAGES.length - 1
-      ? '🍎 花园已经硕果累累，这份亲情满分啦！'
+      ? '花园已经硕果累累，这份亲情满分啦！'
       : `再攒 ${STAGES[i + 1].at - energy} 点，就能进入「${STAGES[i + 1].label}」`;
 
     $('#stageTrack').querySelectorAll('li').forEach((li, n) => {
@@ -443,7 +455,7 @@
       const scene = $('#plantScene');
       scene.classList.add('level-up');
       setTimeout(() => scene.classList.remove('level-up'), 1000);
-      rainParticles(24);
+      rainParticles(14);
     }
     lastStage = i;
   }
@@ -472,20 +484,20 @@
     state.checkins.push({ cardId: card.id, type: card.type, at: card.doneAt, heading: card.heading });
 
     const newStage = addEnergy(ENERGY_PER_CHECKIN);
-    pushFeed('checkin', `${CATS[card.type].emoji} 长辈刚完成「${CATS[card.type].name} · ${card.heading}」打卡，亲情能量 +${ENERGY_PER_CHECKIN}`);
+    pushFeed('checkin', `长辈刚完成「${CATS[card.type].name} · ${card.heading}」打卡，亲情能量 +${ENERGY_PER_CHECKIN}`);
 
     save();
     render();
 
-    rainParticles(30);
+    rainParticles(16);
     burstFrom(fromNode);
     cheerChime();
     voice.say(pick(CATS[card.type].praise), 0.9);
 
-    toast(`✅ 已盖上红印章！亲情能量 +${ENERGY_PER_CHECKIN}`);
+    toast(`已盖上红印章！亲情能量 +${ENERGY_PER_CHECKIN}`);
     if (newStage) {
       setTimeout(() => {
-        toast(`🌱 亲情花园升级啦：${newStage}！您真了不起`);
+        toast(`亲情花园升级啦：${newStage}！您真了不起`);
         voice.say(`恭喜！亲情花园升级啦，现在是${newStage}。您的坚持，让全家人都安心。`, 0.9);
       }, 1800);
     }
@@ -498,14 +510,14 @@
     if (!already) {
       state.stats.messages += 1;
       const newStage = addEnergy(ENERGY_PER_MESSAGE);
-      pushFeed('message', `💌 长辈刚发来留言：「${text}」，亲情能量 +${ENERGY_PER_MESSAGE}`);
+      pushFeed('message', `长辈刚发来留言：「${text}」，亲情能量 +${ENERGY_PER_MESSAGE}`);
       save();
       render();
       burstFrom(fromNode);
       cheerChime();
       voice.say(`话已经送到孩子手机上啦，内容是：${text}。`, 0.9);
-      toast(`💌 已发送给子女：${text}`);
-      if (newStage) setTimeout(() => toast(`🌸 亲情花园升级啦：${newStage}`), 1500);
+      toast(`已发送给子女：${text}`);
+      if (newStage) setTimeout(() => toast(`亲情花园升级啦：${newStage}`), 1500);
     } else {
       save();
       render();
@@ -549,7 +561,7 @@
         $('#callState').textContent = `已接通 · ${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
       };
       show();
-      $('#callHint').textContent = '🎙 温情演示：孩子接起来了，说说今天吃了什么、身体怎么样。';
+      $('#callHint').textContent = '温情演示：孩子接起来了，说说今天吃了什么、身体怎么样。';
       voice.say('接通啦，孩子就在电话那头，慢慢说。', 0.9);
       callIntervals.push(setInterval(() => { sec += 1; show(); }, 1000));
     }, 2800));
@@ -558,7 +570,7 @@
   function endCall() {
     clearCallTimers();
     hideOverlay($('#callOverlay'));
-    toast('📴 通话结束。回到卡片点「✅ 我办妥了」，把这份团圆记进战绩');
+    toast('通话结束。回到卡片点「我办妥了」，把这份团圆记进战绩');
   }
 
   /* ============ 年度战绩海报 ============ */
@@ -624,10 +636,10 @@
       box.style.animationDelay = (0.15 + i * 0.07) + 's';
       mg.appendChild(box);
     });
-    $('.medal-title').textContent = `🎖 本年度趣味勋章（已点亮 ${gotCount} / ${MEDALS.length}）`;
+    $('.medal-title').textContent = `本年度趣味勋章（已点亮 ${gotCount} / ${MEDALS.length}）`;
     $('#posterTip').hidden = true;
     $('#poster').classList.remove('poster-mode');
-    $('#posterSaveBtn').textContent = '🖼 生成纪念海报提示';
+    $('#posterSaveBtn').textContent = '生成纪念海报提示';
   }
 
   function openReport() {
@@ -647,7 +659,7 @@
     if (poster.classList.contains('poster-mode')) {
       poster.classList.remove('poster-mode');
       $('#posterTip').hidden = true;
-      $('#posterSaveBtn').textContent = '🖼 生成纪念海报提示';
+      $('#posterSaveBtn').textContent = '生成纪念海报提示';
       voice.say('已返回战绩明细。', 0.9);
       return;
     }
@@ -655,12 +667,12 @@
     poster.classList.add('poster-mode');
     const tip = $('#posterTip');
     tip.hidden = false;
-    tip.textContent = '🖼 已进入「纪念海报模式」：按钮和未解锁勋章都收起来了。按 Ctrl + P（苹果电脑 ⌘ + P）选择「另存为 PDF」即可永久保存；也可以直接用系统截图保存这张海报。';
-    $('#posterSaveBtn').textContent = '↩️ 返回战绩明细';
+    tip.textContent = '已进入「纪念海报模式」：按钮和未解锁勋章都收起来了。按 Ctrl + P（苹果电脑 ⌘ + P）选择「另存为 PDF」即可永久保存；也可以直接用系统截图保存这张海报。';
+    $('#posterSaveBtn').textContent = '返回战绩明细';
     const summary = `岁岁念 · ${s.year} 年度亲情战绩：完成 ${s.tasks} 项守护任务，今日健康守护率 ${s.rate}%，子女设置 ${s.childSetups} 次暖心提醒，累计亲情能量 ${s.energy} 点，亲情花园「${s.stage}」。`;
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(summary).then(
-        () => toast('📋 战绩文字总结已复制，可直接粘贴到家庭群'),
+        () => toast('战绩文字总结已复制，可直接粘贴到家庭群'),
         () => {}
       );
     }
@@ -689,7 +701,7 @@
     node.dataset.id = card.id;
 
     const top = el('div', 'card-top');
-    top.appendChild(el('span', 'card-emoji', cat.emoji));
+    top.appendChild(icon(cat.icon, 'card-ic'));
     top.appendChild(el('span', 'card-cat', cat.name));
     if (card.line3 && card.type !== 'medicine' && card.type !== 'travel') top.appendChild(el('span', 'card-time', card.line3));
     node.appendChild(top);
@@ -716,34 +728,30 @@
       node.appendChild(meta);
     }
 
-    if (card.type === 'medicine') node.appendChild(el('p', 'card-note', '💛 温水送服，别空腹；不舒服就先给家人打个电话。'));
-    if (card.type === 'travel') node.appendChild(el('p', 'card-note', '🧣 出门前看看天气，路上慢一点，不着急。'));
+    if (card.type === 'medicine') node.appendChild(el('p', 'card-note', '温水送服，别空腹；不舒服就先给家人打个电话。'));
+    if (card.type === 'travel') node.appendChild(el('p', 'card-note', '出门前看看天气，路上慢一点，不着急。'));
 
     const actions = el('div', 'card-actions');
 
     if (state.mode === 'elder') {
       if (card.type === 'phone') {
-        const call = el('button', 'act act-call', `📞 一键呼叫 ${card.heading.split('·')[0].trim()}`);
-        call.type = 'button';
+        const call = iconBtn('act act-call', 'ic-phone', `一键呼叫 ${card.heading.split('·')[0].trim()}`);
         call.addEventListener('click', () => startCall(card));
         actions.appendChild(call);
         actions.classList.add('is-phone');
       }
-      const listen = el('button', 'act', '🔊 听一听');
-      listen.type = 'button';
+      const listen = iconBtn('act', 'ic-sound', '听一听');
       listen.addEventListener('click', () => {
         voice.say(cardSpeechText(card), 0.78);
-        toast('🔊 正在为您朗读这张卡片…');
+        toast('正在为您朗读这张卡片…');
       });
-      const done = el('button', 'act' + (card.done ? '' : ' act-done'), card.done ? '✅ 已办妥' : '✅ 我办妥了');
-      done.type = 'button';
+      const done = iconBtn('act' + (card.done ? '' : ' act-done'), 'ic-check', card.done ? '已办妥' : '我办妥了');
       if (card.done) { done.disabled = true; done.setAttribute('aria-label', `今天 ${fmtClock(card.doneAt)} 已办妥`); }
       else done.addEventListener('click', () => checkin(card, done));
       actions.appendChild(listen);
       actions.appendChild(done);
     } else {
-      const listen = el('button', 'act', '🔊 听一听（试听朗读）');
-      listen.type = 'button';
+      const listen = iconBtn('act', 'ic-sound', '听一听（试听朗读）');
       listen.addEventListener('click', () => voice.say(cardSpeechText(card), 0.78));
       actions.appendChild(listen);
       actions.classList.add('is-child-preview');
@@ -752,12 +760,12 @@
 
     if (state.mode === 'child') {
       const admin = el('div', 'card-admin');
-      admin.appendChild(el('span', 'pill ' + (card.done ? 'pill-done' : 'pill-wait'), card.done ? `👵 父母已办妥 · ${fmtClock(card.doneAt)}` : '⏳ 父母还没打卡'));
-      const edit = el('button', 'mini-btn mini-btn-edit', '✏️ 修改这张');
+      admin.appendChild(el('span', 'pill ' + (card.done ? 'pill-done' : 'pill-wait'), card.done ? `父母已办妥 · ${fmtClock(card.doneAt)}` : '父母还没打卡'));
+      const edit = el('button', 'mini-btn mini-btn-edit', '修改这张');
       edit.type = 'button';
       edit.addEventListener('click', () => openComposer(card));
       admin.appendChild(edit);
-      const del = el('button', 'mini-btn', '🗑 移除这张卡片');
+      const del = el('button', 'mini-btn', '移除这张卡片');
       del.type = 'button';
       del.addEventListener('click', () => {
         if (!confirm(`确定移除这张「${CATS[card.type].name}」卡片吗？`)) return;
@@ -818,7 +826,9 @@
     const box = $('#catPick');
     box.innerHTML = '';
     Object.entries(CATS).forEach(([key, cat]) => {
-      const b = el('button', 'cat-btn' + (composerDraft.type === key ? ' is-on' : ''), `${cat.emoji} ${cat.name}`);
+      const b = el('button', 'cat-btn' + (composerDraft.type === key ? ' is-on' : ''));
+      b.appendChild(icon(cat.icon));
+      b.appendChild(document.createTextNode(cat.name));
       b.type = 'button';
       b.addEventListener('click', () => {
         composerDraft.type = key;
@@ -841,7 +851,7 @@
       b.addEventListener('click', () => {
         composerDraft.values = Object.assign({}, t);
         renderFieldRows();
-        toast('✨ 模板已填入，可直接修改文字');
+        toast('模板已填入，可直接修改文字');
       });
       box.appendChild(b);
     });
@@ -891,22 +901,22 @@
       const card = state.cards.find(c => c.id === composerDraft.editingId);
       if (!card) { closeComposer(); return; }
       Object.assign(card, fields);
-      pushFeed('setup', `✏️ 您修改了「${CATS[type].name} · ${heading}」卡片`);
+      pushFeed('setup', `您修改了「${CATS[type].name} · ${heading}」卡片`);
       save();
       render();
       closeComposer();
-      toast('✅ 修改已保存，爸妈那边看到的就是新内容');
+      toast('修改已保存，爸妈那边看到的就是新内容');
       return;
     }
 
     state.cards.unshift(Object.assign({ id: uid(), source: 'child', done: false, doneAt: null }, fields));
     state.stats.childSetups += 1;
-    pushFeed('setup', `🧑 您刚为爸妈新增「${CATS[type].name} · ${heading}」卡片`);
+    pushFeed('setup', `您刚为爸妈新增「${CATS[type].name} · ${heading}」卡片`);
     save();
     filter = 'all';
     render();
     closeComposer();
-    toast('✅ 已添加到爸妈的卡片，切到长辈模式就能看到');
+    toast('已添加到爸妈的卡片，切到长辈模式就能看到');
   }
 
   function openComposer(editCard) {
@@ -916,8 +926,8 @@
       ? { heading: editCard.heading || '', line2: editCard.line2 || '', line3: editCard.line3 || '', phone: editCard.phone || '' }
       : {};
 
-    $('#composerTitle').textContent = editCard ? '✏️ 修改这张卡片' : '🧑 远程为爸妈添加一张大卡片';
-    $('#saveCardBtn').textContent = editCard ? '💾 保存修改' : '✅ 保存到爸妈的卡片';
+    $('#composerTitle').textContent = editCard ? '修改这张卡片' : '远程为爸妈添加一张大卡片';
+    $('#saveCardBtn').textContent = editCard ? '保存修改' : '保存到爸妈的卡片';
 
     $('#composer').hidden = false;
     $('#composerBtn').hidden = true;
@@ -985,7 +995,7 @@
 
   $('#modeChild').addEventListener('click', () => {
     applyMode('child'); render();
-    toast('🧑 子女守护模式：可远程加卡片、查看父母打卡动态（通知栏已打开）');
+    toast('子女守护模式：可远程加卡片、查看父母打卡动态（通知栏已打开）');
   });
 
   $('#reportBtn').addEventListener('click', openReport);
@@ -1013,7 +1023,7 @@
 
   $('#speakTestBtn').addEventListener('click', () => {
     voice.say('您好呀！我是岁岁念。以后每天的吃药、打电话、出门，都由我陪您一起记着，点一下我办妥了，亲情小树就会长大一点点。', 0.85);
-    toast('🔊 正在朗读，声音来自您手机/电脑自带的中文语音');
+    toast('正在朗读，声音来自您手机/电脑自带的中文语音');
   });
 
   $('#resetBtn').addEventListener('click', () => {
@@ -1025,7 +1035,7 @@
     applyTextSize(state.textSize, false);
     applyMode('elder');
     render();
-    toast('♻️ 已恢复示例数据，四大分类卡片都回来了');
+    toast('已恢复示例数据，四大分类卡片都回来了');
   });
 
   document.addEventListener('keydown', e => {
@@ -1042,7 +1052,7 @@
     state = loadState();
     lastStage = stageIndex(state.energy);
     render();
-    toast('📲 已同步另一端最新打卡动态');
+    toast('已同步另一端最新打卡动态');
   });
 
   /* ============ 启动 ============ */
@@ -1057,6 +1067,6 @@
   window.addEventListener('focus', () => rolloverIfNewDay(true));
 
   setTimeout(() => {
-    toast('👋 欢迎体验岁岁念：点卡片上的「🔊 听一听」或「✅ 我办妥了」就能感受语音与花园成长');
+    toast('欢迎体验岁岁念：点卡片上的「听一听」或「我办妥了」就能感受语音与花园成长');
   }, 700);
 })();
