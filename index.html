@@ -2,7 +2,8 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#FFFDF7" />
 <title>岁岁念 · 卡片式银发温情备忘录</title>
 <meta name="description" content="Hack4Good 技术向善作品：适老化卡片备忘 + 游戏化亲情正反馈，纯前端运行，数据保存在本机浏览器。" />
 <link rel="stylesheet" href="css/styles.css" />
@@ -179,6 +180,37 @@
         </ol>
         <p class="garden-hint">每点一次「我办妥了」，能量 +100，花园就长大一点。</p>
       </div>
+    </section>
+
+    <section class="calendar" id="calendarPanel" aria-label="打卡日历">
+      <div class="cal-head">
+        <div>
+          <h2 class="cal-title">📅 打卡日历</h2>
+          <p class="cal-sub">每天办妥任意一张卡片，这一天就会点亮；颜色越深，当天完成得越多。</p>
+        </div>
+        <div class="cal-streak">
+          <div class="streak-box" id="streakBox">
+            <span class="streak-num" id="streakNum">0</span>
+            <span class="streak-lab">连续打卡（天）</span>
+          </div>
+          <div class="streak-box best">
+            <span class="streak-num" id="bestStreakNum">0</span>
+            <span class="streak-lab">最长记录（天）</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="cal-nav">
+        <button type="button" class="cal-btn" id="calPrev" aria-label="查看上个月">◀ 上个月</button>
+        <p class="cal-month" id="calMonth" aria-live="polite">——</p>
+        <button type="button" class="cal-btn" id="calNext" aria-label="查看下个月">下个月 ▶</button>
+      </div>
+
+      <div class="cal-weekdays" aria-hidden="true">
+        <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span>
+      </div>
+      <div class="cal-grid" id="calGrid" role="list" aria-label="本月打卡记录"></div>
+      <p class="cal-empty" id="calEmpty" hidden>这个月还没有打卡记录，回到卡片点一次「✅ 我办妥了」就点亮了。</p>
     </section>
 
     <nav class="filter-tabs" aria-label="卡片分类筛选">

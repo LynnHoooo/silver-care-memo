@@ -123,6 +123,7 @@
     { emoji: '📞', name: '亲情连线之星', need: s => s.byType.phone >= 3, hint: '累计完成 3 次亲友通话' },
     { emoji: '💌', name: '报平安小能手', need: s => s.messages >= 3, hint: '发送 3 条暖心留言' },
     { emoji: '🚌', name: '出行安全小达人', need: s => s.byType.travel >= 3, hint: '完成 3 次出行提醒' },
+    { emoji: '🔥', name: '七日连打不间断', need: s => s.bestStreak >= 7, hint: '连续打卡满 7 天' },
   ];
 
   /* ============ 状态存取 ============ */
@@ -736,6 +737,102 @@
     return STAGES[after].label;
   }
 
+  /* ============ 打卡日历与连续天数 ============ */
+
+  const calView = { y: new Date().getFullYear(), m: new Date().getMonth() };
+
+  function checkinDayCounts() {
+    const map = new Map();
+    state.checkins.forEach(c => {
+      const k = dayKey(new Date(c.at));
+      map.set(k, (map.get(k) || 0) + 1);
+    });
+    return map;
+  }
+
+  function shiftDay(d, n) {
+    const x = new Date(d);
+    x.setDate(x.getDate() + n);
+    return x;
+  }
+
+  function computeStreak(days) {
+    let cursor = new Date();
+    // 今天还没打卡时从昨天往前算，今天补上就能接上
+    if (!days.has(dayKey(cursor))) cursor = shiftDay(cursor, -1);
+
+    let current = 0;
+    while (days.has(dayKey(cursor))) {
+      current += 1;
+      cursor = shiftDay(cursor, -1);
+    }
+
+    let best = 0, run = 0, prev = null;
+    [...days.keys()].sort().forEach(k => {
+      run = prev && dayKey(shiftDay(prev, 1)) === k ? run + 1 : 1;
+      best = Math.max(best, run);
+      prev = new Date(k + 'T00:00:00');
+    });
+
+    return { current, best: Math.max(best, current) };
+  }
+
+  function renderCalendar() {
+    const days = checkinDayCounts();
+    const streak = computeStreak(days);
+
+    $('#streakNum').textContent = String(streak.current);
+    $('#bestStreakNum').textContent = String(streak.best);
+    $('#streakBox').classList.toggle('is-hot', streak.current >= 7);
+
+    $('#calMonth').textContent = `${calView.y} 年 ${calView.m + 1} 月`;
+
+    const now = new Date();
+    $('#calNext').disabled = calView.y === now.getFullYear() && calView.m === now.getMonth();
+
+    const lead = (new Date(calView.y, calView.m, 1).getDay() + 6) % 7;
+    const lastDate = new Date(calView.y, calView.m + 1, 0).getDate();
+    const ym = `${calView.y}-${String(calView.m + 1).padStart(2, '0')}`;
+    const todayStr = todayKey();
+
+    const grid = $('#calGrid');
+    grid.innerHTML = '';
+    for (let i = 0; i < lead; i += 1) {
+      const blank = el('div', 'cal-day is-blank');
+      blank.setAttribute('aria-hidden', 'true');
+      grid.appendChild(blank);
+    }
+
+    let monthTotal = 0;
+    for (let d = 1; d <= lastDate; d += 1) {
+      const key = `${ym}-${String(d).padStart(2, '0')}`;
+      const count = days.get(key) || 0;
+      monthTotal += count;
+
+      const cls = 'cal-day'
+        + (count ? ` lv${Math.min(count, 3)}` : '')
+        + (key === todayStr ? ' is-today' : '');
+      const cell = el('div', cls, String(d));
+      cell.setAttribute('role', 'listitem');
+      cell.setAttribute('aria-label', count
+        ? `${calView.m + 1} 月 ${d} 日，完成 ${count} 项`
+        : `${calView.m + 1} 月 ${d} 日，没有打卡`);
+      if (count) cell.appendChild(el('span', 'cal-dot', count > 1 ? `✓${count}` : '✓'));
+      grid.appendChild(cell);
+    }
+
+    $('#calEmpty').hidden = monthTotal > 0;
+  }
+
+  function stepMonth(delta) {
+    const now = new Date();
+    if (delta > 0 && calView.y === now.getFullYear() && calView.m === now.getMonth()) return;
+    calView.m += delta;
+    if (calView.m < 0) { calView.m = 11; calView.y -= 1; }
+    if (calView.m > 11) { calView.m = 0; calView.y += 1; }
+    renderCalendar();
+  }
+
   /* ============ 打卡 ============ */
 
   function pushFeed(kind, text) {
@@ -851,6 +948,7 @@
     thisYear.forEach(c => { if (byType[c.type] !== undefined) byType[c.type] += 1; });
     const total = state.cards.length;
     const doneToday = state.cards.filter(c => c.done).length;
+    const streak = computeStreak(checkinDayCounts());
     return {
       year,
       tasks: thisYear.length,
@@ -862,6 +960,8 @@
       energy: state.energy,
       messages: state.stats.messages,
       stage: STAGES[stageIndex(state.energy)].label,
+      streak: streak.current,
+      bestStreak: streak.best,
     };
   }
 
@@ -877,6 +977,8 @@
       { num: s.energy, lab: '累计亲情能量（点）' },
       { num: s.messages, lab: '长辈发来留言（条）' },
       { num: s.stage, lab: '亲情花园当前阶段' },
+      { num: s.streak, lab: '当前连续打卡（天）' },
+      { num: s.bestStreak, lab: '最长连续打卡（天）' },
     ];
     const grid = $('#statGrid');
     grid.innerHTML = '';
@@ -1242,6 +1344,7 @@
   function render() {
     syncTabs();
     renderGarden();
+    renderCalendar();
     renderBoard();
     renderNotice();
     renderSummary();
@@ -1286,6 +1389,9 @@
     b.addEventListener('click', () => applyTextSize(b.dataset.size, true));
   });
 
+  $('#calPrev').addEventListener('click', () => stepMonth(-1));
+  $('#calNext').addEventListener('click', () => stepMonth(1));
+
   $('#callOverlay').addEventListener('keydown', e => trapTab(e, $('#callOverlay')));
   $('#reportOverlay').addEventListener('keydown', e => trapTab(e, $('#reportOverlay')));
   $('#emergencyOverlay').addEventListener('keydown', e => trapTab(e, $('#emergencyOverlay')));
@@ -1309,6 +1415,9 @@
     state = seedState();
     filter = 'all';
     lastStage = 0;
+    const nowD = new Date();
+    calView.y = nowD.getFullYear();
+    calView.m = nowD.getMonth();
     save();
     applyTextSize(state.textSize, false);
     applyMode('elder');
