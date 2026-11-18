@@ -155,6 +155,9 @@
 
   let state = loadState();
   let filter = 'all';
+  let boardView = 'flip';
+  let boardPage = 0;
+  let flipTimer = null;
 
   function loadState() {
     let s = null;
@@ -684,8 +687,16 @@
   }
 
   let lastStage = stageIndex(state.energy);
-  // 升级标记由 addEnergy 置位、renderGarden 消费：跨标签页同步等外部更新不会误播动画
+  // 升级与生长标记由 addEnergy 置位、renderGarden 消费：跨标签页同步等外部更新不会误播动画
   let pendingLevelUp = false;
+  let pendingGrow = 0;
+
+  function spawnPlantBurst(text) {
+    const scene = $('#plantScene');
+    const b = el('span', 'plant-burst', text);
+    scene.appendChild(b);
+    setTimeout(() => b.remove(), 1050);
+  }
 
   function renderGarden() {
     const energy = state.energy;
@@ -701,7 +712,11 @@
 
     const main = $('#plantMain');
     main.replaceChildren(icon(st.icon));
-    $('#plantScene').dataset.stage = String(i);
+    // 阶段内连续物理成长：随当前阶段能量百分比从 0.82 逐渐长高到 1.12
+    const growScale = i === STAGES.length - 1 ? '1.14' : (0.82 + (pct / 100) * 0.28).toFixed(3);
+    main.style.setProperty('--grow', growScale);
+    const scene = $('#plantScene');
+    scene.dataset.stage = String(i);
     $('#plantStage').textContent = st.label;
 
     $('#energyNext').textContent = i === STAGES.length - 1
@@ -713,8 +728,15 @@
       li.classList.toggle('now', n === i);
     });
 
+    if (pendingGrow > 0) {
+      scene.classList.remove('is-growing');
+      void scene.offsetWidth;
+      scene.classList.add('is-growing');
+      setTimeout(() => scene.classList.remove('is-growing'), 800);
+      spawnPlantBurst(`+${pendingGrow} 🌱 长大啦`);
+    }
+
     if (pendingLevelUp && i > lastStage) {
-      const scene = $('#plantScene');
       scene.classList.add('level-up');
       setTimeout(() => scene.classList.remove('level-up'), 1000);
       const nowLi = $('#stageTrack').querySelector('li.now');
@@ -724,6 +746,7 @@
       }
       rainParticles(14);
     }
+    pendingGrow = 0;
     pendingLevelUp = false;
     lastStage = i;
   }
@@ -731,6 +754,7 @@
   function addEnergy(n) {
     const before = stageIndex(state.energy);
     state.energy += n;
+    pendingGrow = n;
     const after = stageIndex(state.energy);
     if (after <= before) return null;
     pendingLevelUp = true;
@@ -1080,7 +1104,6 @@
     node.appendChild(cardRows(card));
 
     if (card.type === 'message') {
-      node.appendChild(el('p', 'card-note', '不用打字，点一句大字，话就发到孩子手机上了：'));
       const box = el('div', 'phrases');
       box.setAttribute('role', 'group');
       box.setAttribute('aria-label', '快捷暖心短语');
@@ -1157,11 +1180,104 @@
     return node;
   }
 
-  function renderBoard() {
+  function playFlip(dir) {
     const board = $('#board');
+    clearTimeout(flipTimer);
+    board.classList.remove('is-flip-next', 'is-flip-prev');
+    void board.offsetWidth;
+    board.classList.add(dir > 0 ? 'is-flip-next' : 'is-flip-prev');
+    flipTimer = setTimeout(() => board.classList.remove('is-flip-next', 'is-flip-prev'), 480);
+  }
+
+  function goPage(nextPage) {
+    const shown = state.cards.filter(c => filter === 'all' || c.type === filter);
+    if (!shown.length) return;
+    const clamped = Math.max(0, Math.min(shown.length - 1, nextPage));
+    if (clamped === boardPage) return;
+    const dir = clamped > boardPage ? 1 : -1;
+    boardPage = clamped;
+    renderBoard();
+    playFlip(dir);
+  }
+
+  function syncBoardViewButtons() {
+    const isFlip = boardView === 'flip';
+    $('#viewFlipBtn').classList.toggle('is-on', isFlip);
+    $('#viewFlipBtn').setAttribute('aria-pressed', String(isFlip));
+    $('#viewGridBtn').classList.toggle('is-on', !isFlip);
+    $('#viewGridBtn').setAttribute('aria-pressed', String(!isFlip));
+  }
+
+  function renderBoard() {
+    const stage = $('#boardStage');
+    const board = $('#board');
+    const pager = $('#boardPager');
+    const prevBtn = $('#prevPageBtn');
+    const nextBtn = $('#nextPageBtn');
     board.innerHTML = '';
     const shown = state.cards.filter(c => filter === 'all' || c.type === filter);
-    shown.forEach(c => board.appendChild(buildCard(c)));
+    const isFlip = boardView === 'flip';
+    const showFlip = shown.length > 0 && isFlip;
+    board.classList.toggle('is-flip', isFlip);
+    stage.classList.toggle('is-grid-stage', !showFlip);
+    prevBtn.hidden = !showFlip;
+    nextBtn.hidden = !showFlip;
+    syncBoardViewButtons();
+
+    if (showFlip) {
+      boardPage = Math.max(0, Math.min(shown.length - 1, boardPage));
+      // 左右对称扇形叠放：左侧露前 2 张，右侧露后 2 张，当前卡居中置顶
+      [
+        { offset: -2, cls: 'card-deck-prev2' },
+        { offset: -1, cls: 'card-deck-prev1' },
+        { offset:  2, cls: 'card-deck-next2' },
+        { offset:  1, cls: 'card-deck-next1' },
+      ].forEach(({ offset, cls }) => {
+        const idx = boardPage + offset;
+        if (idx >= 0 && idx < shown.length) {
+          const back = buildCard(shown[idx]);
+          back.classList.add(cls);
+          back.setAttribute('aria-hidden', 'true');
+          back.addEventListener('click', () => goPage(idx));
+          board.appendChild(back);
+        }
+      });
+      const front = buildCard(shown[boardPage]);
+      front.classList.add('card-deck-front');
+      board.appendChild(front);
+
+      pager.hidden = false;
+      $('#pagerText').textContent = `第 ${boardPage + 1} 张 · 共 ${shown.length} 张`;
+      prevBtn.disabled = boardPage === 0;
+      nextBtn.disabled = boardPage >= shown.length - 1;
+      const dots = $('#pagerDots');
+      dots.innerHTML = '';
+      let activeDot = null;
+      shown.forEach((c, idx) => {
+        const isOn = idx === boardPage;
+        const d = el('button', 'pager-dot' + (isOn ? ' is-on' : ''));
+        d.type = 'button';
+        d.style.setProperty('--cat', `var(--c-${c.type})`);
+        const icBox = el('span', 'pager-dot-ic');
+        icBox.appendChild(icon(CATS[c.type].icon));
+        const info = el('span', 'pager-dot-info');
+        info.appendChild(el('span', 'pager-dot-title', c.heading));
+        info.appendChild(el('span', 'pager-dot-sub', c.done ? '✓ 已办妥' : (c.line3 || CATS[c.type].name)));
+        d.appendChild(icBox);
+        d.appendChild(info);
+        d.setAttribute('aria-label', `翻到第 ${idx + 1} 张：${c.heading}`);
+        d.addEventListener('click', () => goPage(idx));
+        dots.appendChild(d);
+        if (isOn) activeDot = d;
+      });
+      if (activeDot && activeDot.scrollIntoView) {
+        activeDot.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      }
+    } else {
+      shown.forEach(c => board.appendChild(buildCard(c)));
+      pager.hidden = true;
+    }
+
     $('#boardEmpty').hidden = shown.length > 0;
     const doneCount = shown.filter(c => c.done).length;
     $('#boardCount').textContent = state.mode === 'elder'
@@ -1399,21 +1515,52 @@
   document.querySelectorAll('.filter-tabs .tab').forEach(tab => {
     tab.addEventListener('click', () => {
       filter = tab.dataset.filter;
+      boardPage = 0;
       syncTabs();
       renderBoard();
       playEntrance();
     });
   });
 
+  $('#viewFlipBtn').addEventListener('click', () => {
+    if (boardView === 'flip') return;
+    boardView = 'flip';
+    boardPage = 0;
+    renderBoard();
+    playEntrance();
+  });
+  $('#viewGridBtn').addEventListener('click', () => {
+    if (boardView === 'grid') return;
+    boardView = 'grid';
+    renderBoard();
+    playEntrance();
+  });
+  $('#prevPageBtn').addEventListener('click', () => goPage(boardPage - 1));
+  $('#nextPageBtn').addEventListener('click', () => goPage(boardPage + 1));
+
   $('#speakTestBtn').addEventListener('click', () => {
     voice.say('您好呀！我是岁岁念。以后每天的吃药、打电话、出门，都由我陪您一起记着，点一下我办妥了，亲情小树就会长大一点点。', 0.85);
     toast('正在朗读，声音来自您手机/电脑自带的中文语音');
+  });
+
+  $('#plantScene').addEventListener('click', () => {
+    const scene = $('#plantScene');
+    scene.classList.remove('is-growing');
+    void scene.offsetWidth;
+    scene.classList.add('is-growing');
+    setTimeout(() => scene.classList.remove('is-growing'), 800);
+    const i = stageIndex(state.energy);
+    const msg = i === STAGES.length - 1
+      ? '花园已经硕果累累啦！'
+      : `小植物正在努力长大，再攒 ${STAGES[i + 1].at - state.energy} 点就能进入「${STAGES[i + 1].label}」`;
+    toast(msg);
   });
 
   $('#resetBtn').addEventListener('click', () => {
     if (!confirm('会清空本机记录的所有卡片和打卡进度，恢复到 4 条示例卡片，确定吗？')) return;
     state = seedState();
     filter = 'all';
+    boardPage = 0;
     lastStage = 0;
     const nowD = new Date();
     calView.y = nowD.getFullYear();
@@ -1426,10 +1573,19 @@
   });
 
   document.addEventListener('keydown', e => {
-    if (e.key !== 'Escape') return;
-    if (!$('#callOverlay').hidden) endCall();
-    else if (!$('#reportOverlay').hidden) closeReport();
-    else if (!$('#emergencyOverlay').hidden) closeEmergency();
+    if (e.key === 'Escape') {
+      if (!$('#callOverlay').hidden) endCall();
+      else if (!$('#reportOverlay').hidden) closeReport();
+      else if (!$('#emergencyOverlay').hidden) closeEmergency();
+      return;
+    }
+    const tag = document.activeElement && document.activeElement.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+    if (!$('#callOverlay').hidden || !$('#reportOverlay').hidden || !$('#emergencyOverlay').hidden) return;
+    if (boardView === 'flip') {
+      if (e.key === 'ArrowLeft') goPage(boardPage - 1);
+      else if (e.key === 'ArrowRight') goPage(boardPage + 1);
+    }
   });
 
   $('#callOverlay').addEventListener('click', e => { if (e.target === $('#callOverlay')) endCall(); });

@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#FFFDF7" />
 <title>岁岁念 · 卡片式银发温情备忘录</title>
 <meta name="description" content="Hack4Good 技术向善作品：适老化卡片备忘 + 游戏化亲情正反馈，纯前端运行，数据保存在本机浏览器。" />
-<link rel="stylesheet" href="css/styles.css" />
+<link rel="stylesheet" href="css/styles.css?v=20261118d" />
 </head>
 <body data-mode="elder">
 
@@ -240,11 +240,31 @@
     </section>
 
     <div class="board-head">
-      <h2 class="board-title" id="boardTitle">今日备忘卡片</h2>
-      <p class="board-count" id="boardCount"></p>
+      <div class="board-head-main">
+        <h2 class="board-title" id="boardTitle">今日备忘卡片</h2>
+        <p class="board-count" id="boardCount"></p>
+      </div>
+      <div class="board-view-switch" role="group" aria-label="卡片查看方式">
+        <button type="button" class="bv-btn is-on" id="viewFlipBtn" aria-pressed="true">📖 翻页看</button>
+        <button type="button" class="bv-btn" id="viewGridBtn" aria-pressed="false">🗂️ 全部摊开</button>
+      </div>
     </div>
 
-    <main class="board" id="board" tabindex="-1"></main>
+    <div class="board-stage" id="boardStage">
+      <button type="button" class="btn pager-side pager-prev" id="prevPageBtn" aria-label="上一张">
+        <span class="pager-arrow" aria-hidden="true">⬅️</span>
+        <span class="pager-word">上一张</span>
+      </button>
+      <main class="board is-flip" id="board" tabindex="-1"></main>
+      <button type="button" class="btn pager-side pager-next" id="nextPageBtn" aria-label="下一张">
+        <span class="pager-arrow" aria-hidden="true">➡️</span>
+        <span class="pager-word">下一张</span>
+      </button>
+    </div>
+    <div class="board-pager" id="boardPager" aria-label="备忘录底部滚动预览">
+      <span class="pager-text" id="pagerText">第 1 / 4 张</span>
+      <div class="pager-dots" id="pagerDots"></div>
+    </div>
     <p class="board-empty" id="boardEmpty" hidden>这个分类还没有卡片，切到「子女守护模式」为爸妈加一张吧。</p>
 
     <footer class="app-footer">
@@ -328,6 +348,6 @@
     </div>
   </div>
 
-  <script src="js/app.js"></script>
+  <script src="js/app.js?v=20261118d"></script>
 </body>
 </html>
