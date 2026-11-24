@@ -638,7 +638,7 @@
     const i = stageIndex(energy);
     if (i === STAGES.length - 1) return 100;
     const cur = STAGES[i].at, next = STAGES[i + 1].at;
-    return Math.max(3, Math.round(((energy - cur) / (next - cur)) * 100));
+    return Math.max(0, Math.min(100, Math.round(energy / STAGES[STAGES.length - 1].at * 100)));
   }
 
   /* ============ 一次性动效 ============ */
@@ -711,9 +711,23 @@
     bar.setAttribute('aria-valuetext', `亲情能量 ${energy} 点，${st.label}`);
 
     const main = $('#plantMain');
-    main.replaceChildren(icon(st.icon));
+    if (main.dataset.stage !== String(i)) {
+      const picture = document.createElement('picture');
+      const still = document.createElement('source');
+      still.media = '(prefers-reduced-motion: reduce)';
+      still.srcset = `assets/growth/stage-${i}.png`;
+      const img = document.createElement('img');
+      img.src = `assets/growth/stage-${i}.gif`;
+      img.alt = st.label;
+      img.width = 180;
+      img.height = 180;
+      picture.append(still, img);
+      main.replaceChildren(picture);
+      main.dataset.stage = String(i);
+    }
+    $('#gardenPanel').style.setProperty('--growth-progress', pct + '%');
     // 阶段内连续物理成长：随当前阶段能量百分比从 0.82 逐渐长高到 1.12
-    const growScale = i === STAGES.length - 1 ? '1.14' : (0.82 + (pct / 100) * 0.28).toFixed(3);
+    const growScale = '1';
     main.style.setProperty('--grow', growScale);
     const scene = $('#plantScene');
     scene.dataset.stage = String(i);
@@ -812,6 +826,11 @@
     $('#calMonth').textContent = `${calView.y} 年 ${calView.m + 1} 月`;
 
     const now = new Date();
+    $('#tearYear').textContent = `${now.getFullYear()} 年 · ${now.getMonth() + 1} 月`;
+    $('#tearDate').textContent = String(now.getDate()).padStart(2, '0');
+    $('#tearWeek').textContent = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'][now.getDay()];
+    const todayCount = days.get(todayKey()) || 0;
+    $('#tearMessage').textContent = todayCount ? `今日已办妥 ${todayCount} 件` : '今日尚未打卡';
     $('#calNext').disabled = calView.y === now.getFullYear() && calView.m === now.getMonth();
 
     const lead = (new Date(calView.y, calView.m, 1).getDay() + 6) % 7;
@@ -836,7 +855,9 @@
       const cls = 'cal-day'
         + (count ? ` lv${Math.min(count, 3)}` : '')
         + (key === todayStr ? ' is-today' : '');
-      const cell = el('div', cls, String(d));
+      const cell = el('div', cls);
+      cell.appendChild(el('span', 'cal-date-number', String(d)));
+      if (key === todayStr) cell.setAttribute('aria-current', 'date');
       cell.setAttribute('role', 'listitem');
       cell.setAttribute('aria-label', count
         ? `${calView.m + 1} 月 ${d} 日，完成 ${count} 项`
@@ -879,6 +900,15 @@
     save();
     render();
 
+    const garden = $('#gardenPanel');
+    garden.scrollIntoView({ behavior: reduced() ? 'instant' : 'smooth', block: 'center' });
+    garden.classList.remove('checkin-growth');
+    void garden.offsetWidth;
+    garden.classList.add('checkin-growth');
+    const growthImage = $('#plantMain img');
+    if (growthImage) growthImage.src = `assets/growth/stage-${stageIndex(state.energy)}.gif?play=${Date.now()}`;
+    clearTimeout(garden.growthTimer);
+    garden.growthTimer = setTimeout(() => garden.classList.remove('checkin-growth'), 6200);
     rainParticles(16);
     burstFrom(fromNode);
     cheerChime();
@@ -1298,7 +1328,10 @@
     list.innerHTML = '';
     state.feed.forEach(item => {
       const li = el('li', 'notice-item');
-      li.appendChild(el('span', 'when', fmtClock(item.at)));
+      li.dataset.kind = item.kind || 'checkin';
+      const when = el('time', 'when', `${new Date(item.at).getMonth() + 1}/${new Date(item.at).getDate()} · ${fmtClock(item.at)}`);
+      when.dateTime = item.at;
+      li.appendChild(when);
       li.appendChild(el('span', null, item.text));
       list.appendChild(li);
     });

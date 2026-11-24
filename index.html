@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#FFFDF7" />
 <title>岁岁念 · 卡片式银发温情备忘录</title>
 <meta name="description" content="Hack4Good 技术向善作品：适老化卡片备忘 + 游戏化亲情正反馈，纯前端运行，数据保存在本机浏览器。" />
-<link rel="stylesheet" href="css/styles.css?v=20261118d" />
+<link rel="stylesheet" href="css/styles.css?v=20261124-timeline" />
 </head>
 <body data-mode="elder">
 
@@ -109,25 +109,17 @@
       <h1 class="brand-title"><svg class="ic ic-brand"><use href="#ic-logo"/></svg>岁岁念</h1>
       <p class="brand-sub">卡片式银发温情备忘录</p>
       <p class="brand-date" id="todayLine">今天是 ——</p>
-    </header>
-
-    <section class="app-header" aria-label="常用设置">
       <div class="mode-area">
         <p class="mode-label" id="modeLabel">当前视角：长辈卡片模式</p>
         <div class="mode-switch" role="group" aria-label="视角切换">
-          <button type="button" class="mode-btn is-on" id="modeElder" aria-pressed="true">👵 长辈卡片模式</button>
-          <button type="button" class="mode-btn" id="modeChild" aria-pressed="false">🧑 子女守护模式</button>
+          <button type="button" class="mode-btn is-on" id="modeElder" aria-pressed="true">长辈视角</button>
+          <button type="button" class="mode-btn" id="modeChild" aria-pressed="false">子女视角</button>
         </div>
       </div>
 
-      <section class="today-summary only-elder" aria-label="今日概览">
-        <p class="sum-count">今天 <span class="sum-num" id="sumTotal">4</span> 件事 · 已办妥 <span class="sum-num" id="sumDone">0</span> 件</p>
-        <p class="sum-streak" id="sumStreak">还没有打卡记录，办妥一张就从今天开始</p>
-        <button type="button" class="btn btn-speak" id="speakAllBtn" aria-pressed="false">
-          <svg class="ic"><use href="#ic-sound"/></svg><span id="speakAllLabel">把今天的事念给我听</span>
-        </button>
-      </section>
+    </header>
 
+    <section class="app-header" aria-label="常用设置">
       <button type="button" class="btn btn-emergency" id="emergencyBtn">
         <svg class="ic"><use href="#ic-alert"/></svg><span class="only-elder">我不舒服</span><span class="only-child">设置紧急求助信息</span>
       </button>
@@ -147,29 +139,33 @@
       </div>
     </section>
 
-    <section class="notice-bar only-child" id="noticeBar" hidden aria-live="polite" aria-label="安心动态通知栏">
+    <section class="notice-bar only-child" id="noticeBar" hidden aria-live="polite" aria-label="家人近况">
       <div class="notice-head">
-        <h2 class="notice-title">安心动态通知栏</h2>
-        <p class="notice-desc">爸妈刚完成的打卡与留言，会实时同步到这里</p>
+        <h2 class="notice-title">家人近况</h2>
+
       </div>
       <ul class="notice-list" id="noticeList"></ul>
-      <p class="notice-empty" id="noticeEmpty">还没有动态。切到长辈模式点一次「我办妥了」试试。</p>
+      <p class="notice-empty" id="noticeEmpty">还没有新的近况。</p>
     </section>
 
     <section class="garden" id="gardenPanel" aria-label="亲情暖心花园">
-      <div class="garden-plant">
-        <p class="garden-kicker">亲情暖心花园</p>
-        <div class="plant-scene" id="plantScene" data-stage="0">
-          <span class="plant-main" id="plantMain"><svg class="ic"><use href="#ic-sprout"/></svg></span>
-          <span class="plant-ground" aria-hidden="true"></span>
-        </div>
-        <p class="plant-stage" id="plantStage">小嫩芽</p>
-      </div>
+      <p class="garden-kicker">亲情暖心花园</p>
+      <section class="today-summary only-elder" aria-label="今日概览">
+        <p class="sum-count">今天 <span class="sum-num" id="sumTotal">4</span> 件事 · 已办妥 <span class="sum-num" id="sumDone">0</span> 件</p>
+        <p class="sum-streak" id="sumStreak">还没有打卡记录，办妥一张就从今天开始</p>
+        <button type="button" class="btn btn-speak" id="speakAllBtn" aria-pressed="false">
+          <svg class="ic"><use href="#ic-sound"/></svg><span id="speakAllLabel">把今天的事念给我听</span>
+        </button>
+      </section>
 
       <div class="garden-info">
         <h2 class="garden-title">亲情能量 <span class="energy-num" id="energyNum">0</span> 点</h2>
         <div class="energy-bar" role="progressbar" aria-label="亲情花园成长进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="energyBar">
           <div class="energy-fill" id="energyFill"></div>
+          <div class="plant-scene" id="plantScene" data-stage="0">
+            <span class="plant-main" id="plantMain"></span>
+            <span class="plant-stage" id="plantStage">小嫩芽</span>
+          </div>
         </div>
         <p class="energy-next" id="energyNext">再攒 300 点，小树就含苞待放啦</p>
         <ol class="stage-track" id="stageTrack">
@@ -186,7 +182,7 @@
       <div class="cal-head">
         <div>
           <h2 class="cal-title">📅 打卡日历</h2>
-          <p class="cal-sub">每天办妥任意一张卡片，这一天就会点亮；颜色越深，当天完成得越多。</p>
+
         </div>
         <div class="cal-streak">
           <div class="streak-box" id="streakBox">
@@ -200,6 +196,17 @@
         </div>
       </div>
 
+      <div class="tear-calendar" aria-label="今日撕页日历">
+        <div class="tear-binding" aria-hidden="true"><i></i><i></i></div>
+        <span class="tear-today-label">今天</span>
+        <p class="tear-year" id="tearYear"></p>
+        <p class="tear-date" id="tearDate"></p>
+        <p class="tear-week" id="tearWeek"></p>
+        <p class="tear-message" id="tearMessage" aria-live="polite"></p>
+        <span class="tear-corner" aria-hidden="true"></span>
+      </div>
+      <details class="calendar-history">
+        <summary>查看打卡记录</summary>
       <div class="cal-nav">
         <button type="button" class="cal-btn" id="calPrev" aria-label="查看上个月">◀ 上个月</button>
         <p class="cal-month" id="calMonth" aria-live="polite">——</p>
@@ -210,7 +217,8 @@
         <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span>
       </div>
       <div class="cal-grid" id="calGrid" role="list" aria-label="本月打卡记录"></div>
-      <p class="cal-empty" id="calEmpty" hidden>这个月还没有打卡记录，回到卡片点一次「✅ 我办妥了」就点亮了。</p>
+      <p class="cal-empty" id="calEmpty" hidden>本月暂无记录</p>
+      </details>
     </section>
 
     <nav class="filter-tabs" aria-label="卡片分类筛选">
@@ -252,12 +260,12 @@
 
     <div class="board-stage" id="boardStage">
       <button type="button" class="btn pager-side pager-prev" id="prevPageBtn" aria-label="上一张">
-        <span class="pager-arrow" aria-hidden="true">⬅️</span>
+        <span class="pager-arrow" aria-hidden="true">←</span>
         <span class="pager-word">上一张</span>
       </button>
       <main class="board is-flip" id="board" tabindex="-1"></main>
       <button type="button" class="btn pager-side pager-next" id="nextPageBtn" aria-label="下一张">
-        <span class="pager-arrow" aria-hidden="true">➡️</span>
+        <span class="pager-arrow" aria-hidden="true">→</span>
         <span class="pager-word">下一张</span>
       </button>
     </div>
@@ -348,6 +356,6 @@
     </div>
   </div>
 
-  <script src="js/app.js?v=20261118d"></script>
+  <script src="js/app.js?v=20261124-timeline"></script>
 </body>
 </html>
