@@ -1763,21 +1763,77 @@ body { background-image: none; }
 .tab:hover:not(.is-on) { transform: none; background: #e9eee4; box-shadow: none; }
 .pending-control { display: inline-flex; align-items: center; gap: 8px; min-height: 60px; font-size: .9rem; white-space: nowrap; cursor: pointer; }
 .pending-control input { width: 20px; height: 20px; margin: 0; accent-color: var(--accent); }
-.board:not(.is-flip) { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; align-items: start; }
-.card, .board.is-flip .card { height: auto; min-height: 0; gap: 14px; padding: 22px 24px; border: 1px solid #d9ded3; border-top: 4px solid var(--cat); border-radius: 16px; background: #fffefa; box-shadow: 0 3px 12px #253d3410; }
-.card::before { content: none; }
-.card-top { gap: 9px; }
-.card-ic { width: 38px; height: 38px; padding: 6px; border-radius: 12px; box-shadow: none; }
-.card-cat, .card-time { font-size: .95rem; }
-.card-head { padding: 0; color: var(--ink); font-size: 1.5rem; }
-.card-rows li { display: grid; grid-template-columns: minmax(4.5em, auto) 1fr; gap: 10px; align-items: baseline; font-size: 1rem; }
-.card-rows .v { font-weight: 550; min-width: 0; }
-.card-rows .k, .card-note, .phrase-meta { color: var(--ink-mute); }
-.card-note, .phrase-meta { font-size: .9rem; }
-.card-actions { gap: 10px; padding-top: 14px; border-top: 1px solid #e1e5dc; }
-.act, .phrase { box-shadow: none; font-size: 1rem; border-radius: 12px; min-height: 60px; }
-.act { border: 1px solid #c7d2c7; color: var(--accent); }
-.act-done, .act-call { color: #fff; border-color: transparent; }
+.board:not(.is-flip) { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 38px 28px; align-items: start; }
+.card {
+  font-family: 'Memo Handwriting', 'KaiTi', 'STKaiti', cursive;
+  font-weight: 400;
+}
+.card, .board.is-flip .card {
+  height: auto;
+  min-height: 0;
+  border: 1px solid #e6dcc9;
+  border-radius: 5px 8px 6px 4px;
+  padding: 46px 28px 82px;
+  color: #494338;
+  background-color: #fff9ed;
+  background-image: url('../assets/paper-grain.svg');
+  box-shadow: 0 3px 4px #79634214, 0 14px 26px #79634226;
+}
+.card::before {
+  top: 0;
+  width: 36%;
+  height: 26px;
+  border: 1px solid #d9bc6c38;
+  border-radius: 1px 3px 2px 1px;
+  background: #eed58b80;
+  box-shadow: 0 2px 3px #9e81351a;
+  transform: translateX(-50%) rotate(-2deg);
+}
+.card::after {
+  content: '';
+  position: absolute;
+  bottom: 12px;
+  right: 18px;
+  width: 68px;
+  height: 68px;
+  background: url('../assets/daisy.svg') center / contain no-repeat;
+  pointer-events: none;
+}
+.card-head {
+  padding-bottom: 14px;
+  border-bottom: 2px solid #aaa18e;
+  font-size: 1.9rem;
+  font-weight: 400;
+  line-height: 1.5;
+}
+.card-cat, .card-time, .card-rows .k, .card-rows .v, .card .act, .card .phrase {
+  font-weight: 400;
+}
+.card-rows { gap: 12px; }
+.card-rows li {
+  align-items: baseline;
+  border-bottom: 1px solid #bcb3a178;
+  padding: 8px 0 12px;
+  font-size: 1.25rem;
+  line-height: 1.65;
+}
+.card-rows li::before {
+  content: '';
+  flex: 0 0 17px;
+  height: 17px;
+  border: 2px solid #a59a84;
+  border-radius: 3px;
+  align-self: flex-start;
+  margin-top: .4em;
+}
+.card-note { font-size: 1.2rem; }
+.card-ic { background: #efe5cf; box-shadow: none; border-radius: 8px; }
+.card-time { background: #f5ecd9; }
+@media (max-width: 600px) {
+  .card, .board.is-flip .card { padding: 38px 18px 76px; }
+  .card-head { font-size: 1.65rem; }
+  .card-rows li { font-size: 1.15rem; }
+}
 .act:disabled { background: #edf1e8; color: #4b5d4b; cursor: default; }
 .act .ic { width: 24px; height: 24px; }
 .board.is-flip .card { overflow: visible; }
@@ -1823,7 +1879,6 @@ body { background-image: none; }
   .filter-tabs .tab { flex: none; }
   .board:not(.is-flip) { grid-template-columns: minmax(0,1fr); }
   .board.is-flip { padding-inline: 20px; }
-  .card, .board.is-flip .card { padding: 16px; }
   .card-actions { grid-template-columns: repeat(auto-fit,minmax(min(100%, 6.5rem),1fr)); }
   .calendar { grid-template-columns: minmax(0, 1fr); padding: 20px 14px; }
   .calendar .tear-calendar { justify-self: center; width: min(76%, 280px); margin-top: 18px; }
