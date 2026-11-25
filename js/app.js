@@ -174,6 +174,11 @@
     };
   }
 
+  const narrowScreen = window.matchMedia('(max-width: 720px)');
+  const optionsSheet = document.getElementById('boardOptionsSheet');
+  const hasSheet = typeof optionsSheet.showModal === 'function';
+  const compactBoard = () => narrowScreen.matches && hasSheet;
+
   let state = loadState();
   let filter = 'all';
   let boardView = 'flip';
@@ -439,6 +444,10 @@
     $('#dayHeading').textContent = pending ? `今天还有 ${pending} 件事` : total ? '今天都办妥了' : '今天还没有提醒';
     const streak = streakDays();
     $('#openPendingBtn').textContent = pending ? '查看待办' : '查看卡片';
+    if (compactBoard()) {
+      $('#dayProgress').textContent = `已办妥 ${done} / ${total}`;
+      return;
+    }
     $('#dayProgress').textContent = `共 ${total} 件提醒 · 已办妥 ${done} 件` + (streak ? ` · 连续打卡 ${streak} 天` : '');
   }
 
@@ -982,7 +991,7 @@
       save();
       render();
       const front = $('#board article:not([aria-hidden]) h3');
-      (front || $('#pendingOnly')).focus({ preventScroll: true });
+      (front || $(compactBoard() ? '#boardOptionsBtn' : '#pendingOnly')).focus({ preventScroll: true });
       toast(`已撤销「${record.heading}」的打卡`);
     });
   }
@@ -1025,7 +1034,7 @@
 
     const current = [...$('#board').querySelectorAll('article:not([aria-hidden])')];
     const target = current.find(node => node.dataset.id === card.id) || current[0];
-    (target?.querySelector('h3') || $('#pendingOnly')).focus({ preventScroll: true });
+    (target?.querySelector('h3') || $(compactBoard() ? '#boardOptionsBtn' : '#pendingOnly')).focus({ preventScroll: true });
 
     const garden = $('#gardenPanel');
     garden.classList.remove('checkin-growth');
@@ -1367,6 +1376,13 @@
   function syncBoardViewButtons() {
     const isFlip = boardView === 'flip';
     $('#pendingOnly').checked = pendingOnly;
+    const selection = [];
+    if (filter !== 'all') selection.push(document.querySelector(`.tab[data-filter="${filter}"]`).textContent.trim());
+    if (pendingOnly) selection.push('只看待办');
+    if (!isFlip) selection.push('全部摊开');
+    const options = $('#boardOptionsBtn');
+    options.textContent = selection.join(' · ') || '筛选与视图';
+    options.setAttribute('aria-label', selection.length ? '筛选与视图，当前：' + selection.join('，') : '筛选与视图');
     $('#viewFlipBtn').classList.toggle('is-on', isFlip);
     $('#viewFlipBtn').setAttribute('aria-pressed', String(isFlip));
     $('#viewGridBtn').classList.toggle('is-on', !isFlip);
@@ -1450,6 +1466,11 @@
     $('#boardEmpty').textContent = pendingOnly
       ? '这里没有待办事项。取消「只看待办」可查看所有状态。'
       : state.mode === 'elder' ? '今天没有这一类提醒。' : '这里还没有卡片，可以添加一张提醒。';
+    if (compactBoard()) {
+      $('#boardTitle').textContent = state.mode === 'elder' ? '今日便签' : '爸妈的便签';
+      $('#boardCount').textContent = showFlip ? `${boardPage + 1} / ${shown.length}` : `${shown.length} 张`;
+      return;
+    }
     const doneCount = shown.filter(c => c.done).length;
     $('#boardCount').textContent = state.mode === 'elder'
       ? `共 ${shown.length} 张 · 已办妥 ${doneCount} 张 · ${todayDisplay()}`
@@ -1664,7 +1685,7 @@
   function renderHeader() {
     const d = new Date();
     const week = ['日', '一', '二', '三', '四', '五', '六'][d.getDay()];
-    $('#todayLine').textContent = `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 · 星期${week}`;
+    $('#todayLine').textContent = (compactBoard() ? '' : d.getFullYear() + '年') + `${d.getMonth() + 1}月${d.getDate()}日 · 星期${week}`;
   }
 
   /* ============ 事件绑定 ============ */
@@ -1832,13 +1853,70 @@
 
   /* ============ 启动 ============ */
 
-  const narrowScreen = window.matchMedia('(max-width: 720px)');
+  const optionsForm = $('#boardOptionsForm');
+  // 两处使用同一组分类值、名称和图标；表单中的选择只在“完成”时提交。
+  for (const tab of document.querySelectorAll('.filter-tabs .tab')) {
+    const label = el('label', 'sheet-choice');
+    const input = el('input');
+    input.type = 'radio';
+    input.name = 'category';
+    input.value = tab.dataset.filter;
+    const name = el('span', 'sheet-choice-name');
+    for (const child of tab.childNodes) name.appendChild(child.cloneNode(true));
+    label.append(input, name);
+    $('#sheetCategories').appendChild(label);
+  }
+
+  $('#boardOptionsBtn').addEventListener('click', () => {
+    optionsForm.elements.category.value = filter;
+    optionsForm.elements.pending.checked = pendingOnly;
+    optionsForm.elements.view.value = boardView;
+    optionsSheet.showModal();
+    $('#sheetCancel').focus({ preventScroll: true });
+  });
+  $('#sheetCancel').addEventListener('click', () => optionsSheet.close());
+  optionsSheet.addEventListener('close', () => {
+    if (optionsSheet.open) return;
+    const target = compactBoard() ? $('#boardOptionsBtn') : $('.bv-btn.is-on');
+    target.focus({ preventScroll: true });
+  });
+  optionsForm.addEventListener('submit', event => {
+    event.preventDefault();
+    const data = new FormData(optionsForm);
+    const nextFilter = data.get('category');
+    const nextPending = data.has('pending');
+    const nextView = data.get('view');
+    if (filter !== nextFilter || pendingOnly !== nextPending || boardView !== nextView) boardPage = 0;
+    filter = nextFilter;
+    pendingOnly = nextPending;
+    boardView = nextView;
+    syncTabs();
+    renderBoard();
+    optionsSheet.close();
+  });
+  optionsSheet.addEventListener('click', event => {
+    if (event.target !== optionsSheet) return;
+    const bounds = optionsSheet.getBoundingClientRect();
+    if (event.clientY < bounds.top || event.clientX < bounds.left || event.clientX > bounds.right) optionsSheet.close();
+  });
+
   function placeGarden() {
     if (narrowScreen.matches) $('.memo-section').after($('#gardenPanel'));
     else $('.overview').append($('#gardenPanel'));
   }
-  placeGarden();
-  narrowScreen.addEventListener('change', placeGarden);
+  function updateLayout() {
+    if (optionsSheet.open && !compactBoard()) optionsSheet.close();
+    document.body.classList.toggle('compact-board', compactBoard());
+    $('#boardOptionsBtn').hidden = !compactBoard();
+    placeGarden();
+  }
+  updateLayout();
+  narrowScreen.addEventListener('change', () => {
+    updateLayout();
+    renderHeader();
+    renderSummary();
+    renderBoard();
+  });
   applyTextSize(state.textSize, false);
   applyMode(state.mode);
   render();

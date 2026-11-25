@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#FFFDF7" />
 <title>岁岁念 · 卡片式银发温情备忘录</title>
 <meta name="description" content="Hack4Good 技术向善作品：适老化卡片备忘 + 游戏化亲情正反馈，纯前端运行，数据保存在本机浏览器。" />
-<link rel="stylesheet" href="css/styles.css?v=20261125-reminders" />
+<link rel="stylesheet" href="css/styles.css?v=20261125-sheet" />
 </head>
 <body data-mode="elder">
 
@@ -206,6 +206,7 @@
           <h2 class="board-title" id="boardTitle">今日备忘卡片</h2>
           <p class="board-count" id="boardCount"></p>
         </div>
+        <button type="button" id="boardOptionsBtn" class="board-options-btn" aria-haspopup="dialog" aria-controls="boardOptionsSheet" hidden>筛选与视图</button>
         <div class="board-view-switch" role="group" aria-label="卡片查看方式">
           <button type="button" class="bv-btn is-on" id="viewFlipBtn" aria-pressed="true">📖 翻页看</button>
           <button type="button" class="bv-btn" id="viewGridBtn" aria-pressed="false">🗂️ 全部摊开</button>
@@ -309,6 +310,33 @@
 
   </main>
 
+  <dialog id="boardOptionsSheet" class="options-sheet" aria-labelledby="sheetTitle">
+    <form id="boardOptionsForm">
+      <header class="sheet-head">
+        <button type="button" id="sheetCancel">取消</button>
+        <h2 id="sheetTitle">筛选与视图</h2>
+        <button type="submit" class="sheet-done">完成</button>
+      </header>
+      <div class="sheet-body">
+        <fieldset>
+          <legend>卡片分类</legend>
+          <div id="sheetCategories" class="sheet-list"></div>
+        </fieldset>
+        <label class="sheet-toggle">
+          <span>只看待办</span>
+          <input type="checkbox" name="pending" role="switch">
+        </label>
+        <fieldset>
+          <legend>查看方式</legend>
+          <div class="sheet-segment">
+            <label><input type="radio" name="view" value="flip"><span>翻页看</span></label>
+            <label><input type="radio" name="view" value="grid"><span>全部摊开</span></label>
+          </div>
+        </fieldset>
+      </div>
+    </form>
+  </dialog>
+
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <div class="fx-layer" id="fxLayer" aria-hidden="true"></div>
 
@@ -379,6 +407,6 @@
     </div>
   </div>
 
-  <script src="js/app.js?v=20261125-reminders"></script>
+  <script src="js/app.js?v=20261125-sheet"></script>
 </body>
 </html>
