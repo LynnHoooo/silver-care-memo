@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#FFFDF7" />
 <title>岁岁念 · 卡片式银发温情备忘录</title>
 <meta name="description" content="Hack4Good 技术向善作品：适老化卡片备忘 + 游戏化亲情正反馈，纯前端运行，数据保存在本机浏览器。" />
-<link rel="stylesheet" href="css/styles.css?v=20261125-sheet" />
+<link rel="stylesheet" href="css/styles.css?v=20261125-family" />
 </head>
 <body data-mode="elder">
 
@@ -245,6 +245,55 @@
 
     </section>
 
+    <section class="family-journal" id="familyJournal" aria-labelledby="familyTitle">
+      <h2 id="familyTitle">家人手记</h2>
+      <div class="family-groups">
+        <details id="familyProfile">
+          <summary><svg class="ic" aria-hidden="true"><use href="#ic-logo"/></svg>长辈资料</summary>
+          <div class="family-panel">
+            <dl class="family-facts" id="profileFacts"></dl>
+            <button class="btn btn-ghost" type="button" id="profileEdit">编辑资料</button>
+            <form class="family-form" id="profileForm" hidden>
+              <label>公历生日<input name="birthday" type="date" min="0001-01-01"></label>
+              <label>饮食忌口<textarea name="diet" rows="2" placeholder="有哪些食物需要避开？"></textarea></label>
+              <label>药物过敏史与既往情况<textarea name="history" rows="2" aria-describedby="historyHint"></textarea></label>
+              <small id="historyHint">这项也会显示在紧急求助信息里。</small>
+              <div class="family-actions"><button class="btn btn-primary">保存资料</button><button class="btn btn-ghost" type="button" id="profileCancel">取消</button></div>
+            </form>
+          </div>
+        </details>
+        <details id="familyLetters">
+          <summary><svg class="ic" aria-hidden="true"><use href="#ic-message"/></svg>悄悄话</summary>
+          <div class="family-panel">
+            <form class="family-form" id="letterForm" hidden>
+              <label>想对长辈说的话<textarea name="message" rows="3" maxlength="500" required placeholder="爸，周末我陪您去公园走走。"></textarea></label>
+              <label>什么时候弹出<select name="occasion">
+                <option value="once">下次打开长辈视角</option><option value="daily">每天一次</option>
+                <option value="birthday">每年生日当天</option><option value="festival">指定节日当天</option>
+              </select></label>
+              <label id="festivalField" hidden>节日的公历日期<input type="date" name="festivalDate"></label>
+              <small id="letterHint">留言会在这台设备的长辈视角弹出。</small>
+              <button class="btn btn-primary">保存留言</button>
+            </form>
+            <h3 id="letterListTitle">收到的留言</h3>
+            <ul class="family-list" id="letterList"></ul>
+            <p id="letterEmpty">收到的悄悄话会留在这里，随时可以再读。</p>
+          </div>
+        </details>
+        <details id="familyWishes">
+          <summary><svg class="ic" aria-hidden="true"><use href="#ic-sprout"/></svg>愿望清单</summary>
+          <div class="family-panel">
+            <form class="family-form" id="wishForm">
+              <label>想和家人一起做什么？<input name="wish" maxlength="160" required placeholder="想和家人拍一张合照"></label>
+              <button class="btn btn-primary">记下愿望</button>
+            </form>
+            <ul class="family-list" id="wishList"></ul>
+            <p id="wishEmpty">还没有记下愿望。</p>
+          </div>
+        </details>
+      </div>
+    </section>
+
     <section class="notice-bar only-child" id="noticeBar" hidden aria-live="polite" aria-label="家人近况">
       <div class="notice-head">
         <h2 class="notice-title">家人近况</h2>
@@ -300,7 +349,7 @@
 
     <footer class="app-footer">
       <p>岁岁念 · Hack4Good「技术向善」参赛作品 · 游戏设计 × 智慧养老</p>
-      <p>卡片、留言和求助信息保存在这台设备的浏览器中。</p>
+      <p>卡片、家人手记和求助信息保存在这台设备的浏览器中。</p>
       <div class="foot-tools">
         <button type="button" class="btn btn-ghost btn-small" id="speakTestBtn">试一下语音</button>
         <button type="button" class="btn btn-ghost btn-small" id="historyBtn">补近三天打卡（演示）</button>
@@ -336,6 +385,11 @@
       </div>
     </form>
   </dialog>
+
+  <aside class="letter-popup" id="letterPopup" aria-labelledby="letterPopupTitle" hidden>
+    <div aria-live="polite"><h2 id="letterPopupTitle"></h2><p id="letterPopupText"></p></div>
+    <button class="btn btn-ghost" type="button" id="letterRead">收好留言</button>
+  </aside>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <div class="fx-layer" id="fxLayer" aria-hidden="true"></div>
@@ -407,6 +461,7 @@
     </div>
   </div>
 
-  <script src="js/app.js?v=20261125-sheet"></script>
+  <script src="js/family.js?v=20261125-family"></script>
+  <script src="js/app.js?v=20261125-family"></script>
 </body>
 </html>

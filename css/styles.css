@@ -1991,3 +1991,61 @@ html:has(.options-sheet[open]) { overflow: hidden; }
   .options-sheet[open] { animation: sheet-appear .22s ease-out; }
   @keyframes sheet-appear { from { transform: translateY(35px); opacity: .3; } }
 }
+
+/* 家人手记用分组列表，把填写区留在展开后的行内。 */
+.family-journal { color: var(--ink); }
+.family-journal h2 { margin: 0 0 12px; font-size: 1.5rem; color: #35483a; }
+.family-groups { border: 1px solid #d9ddcf; background: #fffefa; border-radius: 18px; }
+.family-groups details + details { border-top: 1px solid #dfe1d8; }
+.family-groups summary {
+  cursor: pointer; min-height: 64px; padding: 8px 20px; list-style: none;
+  display: flex; align-items: center; gap: 12px; font-size: 1.1rem; font-weight: 650;
+}
+.family-groups summary::-webkit-details-marker { display: none; }
+.family-groups summary .ic { width: 1.25rem; height: 1.25rem; color: #467055; }
+#familyLetters summary .ic { color: #a04963; }
+.family-groups summary::after {
+  content: ''; width: 8px; height: 8px; margin-inline-start: auto;
+  border: solid #627261; border-width: 2px 2px 0 0; transform: rotate(45deg);
+}
+.family-groups details[open] > summary::after { transform: rotate(135deg); }
+.family-panel { padding: 0 20px 20px; max-width: 44rem; overflow-wrap: anywhere; }
+.family-panel h3 { font-size: 1.05rem; }
+.family-panel p { margin: .35rem 0; white-space: pre-wrap; }
+.family-panel small { font-size: .88rem; color: #536254; }
+.family-form { display: grid; gap: 12px; margin-bottom: 16px; }
+.family-form label { display: grid; gap: 4px; font-weight: 650; }
+.family-form :is(input, textarea, select) {
+  display: block; min-width: 0; max-width: 100%; width: 100%; min-height: 60px;
+  padding: 10px 12px; border: 1px solid #929e92; border-radius: 10px;
+  background: white; color: var(--ink); font: inherit; font-weight: 400;
+}
+.family-form textarea { resize: vertical; }
+.family-form > button { justify-self: start; }
+.family-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.family-facts { margin: 0 0 12px; display: grid; grid-template-columns: minmax(5rem, auto) 1fr; }
+.family-facts > * { padding: 8px 0; border-bottom: 1px solid var(--line); margin: 0; }
+.family-facts dt { color: #536254; padding-right: 16px; }
+.family-facts dd { font-weight: 600; white-space: pre-wrap; }
+.family-list { list-style: none; padding: 0; margin: 0; }
+.family-list li { padding: 10px 0; border-top: 1px solid var(--line); }
+.family-text-btn { min-height: 60px; padding: 0 6px; background: transparent; border: 0; color: var(--accent); font: inherit; cursor: pointer; }
+.wish-row label { min-height: 60px; display: flex; gap: 12px; align-items: center; cursor: pointer; font-weight: 600; }
+.wish-row input { width: 1.25rem; height: 1.25rem; flex: none; accent-color: #376449; }
+.wish-row small { margin-inline-start: calc(1.25rem + 12px); }
+.wish-row button { margin-inline-start: 12px; }
+.letter-popup {
+  position: fixed; bottom: max(16px, env(safe-area-inset-bottom)); right: 16px; z-index: 45;
+  width: min(calc(100% - 32px), 24rem); max-height: 52vh; overflow: auto;
+  padding: 14px 18px; border: 1px solid #d6c3ba; border-radius: 18px;
+  background: #fffbf4; box-shadow: 0 6px 30px #46382b29; overflow-wrap: anywhere;
+}
+.letter-popup h2 { color: #8b3953; font-size: 1.2rem; }
+.letter-popup p { margin: 8px 0 12px; white-space: pre-wrap; }
+body:has(.overlay:not([hidden]), dialog[open]) .letter-popup { visibility: hidden; }
+@media (max-width: 480px) {
+  .family-panel { padding-inline: 14px; }
+  .family-facts { grid-template-columns: 1fr; }
+  .family-facts dt { padding-bottom: 0; border: 0; }
+  .family-facts dd { padding-top: 2px; }
+}

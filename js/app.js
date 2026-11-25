@@ -102,7 +102,7 @@
     { key: 'address', label: '家庭住址', placeholder: '例如：阳光社区 3 号楼 502 室' },
     { key: 'blood', label: '血型', placeholder: '例如：A 型' },
     { key: 'meds', label: '正在服用的药', placeholder: '例如：降压药 氨氯地平 5 毫克' },
-    { key: 'history', label: '过敏与既往情况', placeholder: '例如：青霉素过敏 · 高血压 8 年' },
+    { key: 'history', label: '药物过敏史与既往情况', placeholder: '例如：青霉素过敏 · 高血压 8 年' },
   ];
 
   const seedEmergency = () => ({
@@ -165,6 +165,9 @@
       checkins: [],
       feed: [],
       emergency: {},
+      profile: {},
+      wishes: [],
+      letters: [],
       cards: [
         { id: uid(), type: 'medicine', source: 'child', heading: '早间用药提醒', line2: '请按自己的处方核对药名和用量', line3: '08:00', done: false, doneAt: null },
         { id: uid(), type: 'phone', source: 'child', heading: '女儿 · 林小满', phone: '138 0000 1234', line2: '晚 7 点到 9 点', line3: '19:30', done: false, doneAt: null },
@@ -206,6 +209,9 @@
     s.feed = s.feed || [];
     s.cards = s.cards || [];
     s.emergency = s.emergency || {};
+    s.profile = s.profile || {};
+    s.letters = Array.isArray(s.letters) ? s.letters : [];
+    s.wishes = Array.isArray(s.wishes) ? s.wishes : [];
     s.mode = s.mode === 'child' ? 'child' : 'elder';
     s.textSize = TEXT_SIZES[s.textSize] ? s.textSize : 'normal';
     if (s.day !== todayKey()) {
@@ -565,6 +571,7 @@
   }
 
   let emgDraft = null;
+  let emgOriginal = null;
 
   function renderEmergencyRows() {
     const box = $('#emgRows');
@@ -588,7 +595,8 @@
     $('#emgView').hidden = edit;
     $('#emgEdit').hidden = !edit;
     if (edit) {
-      emgDraft = Object.assign({}, state.emergency);
+      emgOriginal = hasExampleEmergency() ? {} : { ...state.emergency };
+      emgDraft = { ...emgOriginal };
       renderEmergencyRows();
     } else {
       renderEmergencyView();
@@ -615,10 +623,15 @@
       $('#emgRows input[type="tel"]').focus();
       return;
     }
-    EMG_FIELDS.forEach(f => { state.emergency[f.key] = (emgDraft[f.key] || '').trim(); });
+    if (hasExampleEmergency()) state.emergency = {};
+    for (const { key } of EMG_FIELDS) {
+      const value = (emgDraft[key] || '').trim();
+      if (value !== (emgOriginal[key] || '')) state.emergency[key] = value;
+    }
     pushFeed('setup', '您更新了爸妈的紧急求助信息');
     save();
     showEmergencyPane(false);
+    journal.render();
     $('#emgSpeakBtn').focus();
     toast('紧急求助信息已保存，父母那边用大字显示');
   }
@@ -955,8 +968,8 @@
     state.feed = state.feed.slice(0, 24);
   }
 
-  // 同一浏览器内，打卡和撤销按顺序提交；再次点击时核对最新记录。
-  function updateCheckins(change) {
+  // 手记和打卡共用同一把锁，修改前先读回其他标签页的最新数据。
+  function updateStoredState(change) {
     function commit() {
       try {
         if (localStorage.getItem(STORE_KEY)) {
@@ -973,7 +986,7 @@
   }
 
   function undoCheckin(record) {
-    updateCheckins(() => {
+    updateStoredState(() => {
       const index = state.checkins.findIndex(entry => entry.cardId === record.cardId && entry.at === record.at);
       if (index < 0 || dayKey(new Date(record.at)) !== todayKey()) {
         render();
@@ -1308,7 +1321,7 @@
         const record = { cardId: card.id, at: card.doneAt, heading: card.heading };
         done.addEventListener('click', () => undoCheckin(record));
       } else {
-        done.addEventListener('click', () => updateCheckins(() => checkin(card.id, done)));
+        done.addEventListener('click', () => updateStoredState(() => checkin(card.id, done)));
       }
       actions.appendChild(listen);
       actions.appendChild(done);
@@ -1680,6 +1693,7 @@
     renderBoard();
     renderNotice();
     renderSummary();
+    journal.render();
   }
 
   function renderHeader() {
@@ -1804,7 +1818,8 @@
   });
 
   $('#resetBtn').addEventListener('click', () => {
-    if (!confirm('会清空本机记录的所有卡片和打卡进度，恢复到 4 条示例卡片，确定吗？')) return;
+    if (!confirm('会清空本机的资料、留言、愿望、提醒和打卡记录，并恢复示例卡片。确定继续吗？')) return;
+    journal.resetForms();
     state = seedState();
     boardView = 'flip';
     pendingOnly = false;
@@ -1910,6 +1925,7 @@
     $('#boardOptionsBtn').hidden = !compactBoard();
     placeGarden();
   }
+  const journal = createFamilyJournal({ getState: () => state, updateStoredState, save, todayKey, uid, el, toast, hasExampleEmergency });
   updateLayout();
   narrowScreen.addEventListener('change', () => {
     updateLayout();
@@ -1922,7 +1938,9 @@
   render();
   playEntrance();
 
-  setInterval(() => rolloverIfNewDay(true), 30000);
+  setInterval(() => {
+    if (!rolloverIfNewDay(true)) journal.offerLetter();
+  }, 30000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) rolloverIfNewDay(true); });
   window.addEventListener('focus', () => rolloverIfNewDay(true));
 
