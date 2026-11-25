@@ -1164,8 +1164,7 @@ a { touch-action: manipulation; }
   background: var(--soft-warm); border: var(--bw) solid #D9BC7E; border-radius: var(--r-md); position: relative;
 }
 .poster-actions { display: flex; gap: 16px; justify-content: center; margin-top: 22px; flex-wrap: wrap; position: relative; }
-.poster.poster-mode .medal.locked,
-.poster.poster-mode .poster-actions { display: none; }
+.poster.poster-mode .medal.locked { display: none; }
 .poster.poster-mode { border-color: var(--c-message); }
 
 /* ---------- 紧急求助弹窗 ---------- */
@@ -1539,77 +1538,6 @@ body[data-mode="child"] .only-elder { display: none !important; }
   font-weight: 400;
   font-display: swap;
 }
-.board-title, .card {
-  font-family: 'Memo Handwriting', 'KaiTi', 'STKaiti', cursive;
-  font-weight: 400;
-}
-.board { gap: 38px 28px; }
-.card, .board.is-flip .card {
-  border: 1px solid #e6dcc9;
-  border-radius: 5px 8px 6px 4px;
-  padding: 46px 28px 82px;
-  color: #494338;
-  background-color: #fff9ed;
-  background-image: url('../assets/paper-grain.svg');
-  box-shadow: 0 3px 4px #79634214, 0 14px 26px #79634226;
-}
-.card::before {
-  top: 0;
-  width: 36%;
-  height: 26px;
-  border: 1px solid #d9bc6c38;
-  border-radius: 1px 3px 2px 1px;
-  background: #eed58b80;
-  box-shadow: 0 2px 3px #9e81351a;
-  transform: translateX(-50%) rotate(-2deg);
-}
-.card::after {
-  content: '';
-  position: absolute;
-  bottom: 12px;
-  right: 18px;
-  width: 68px;
-  height: 68px;
-  background: url('../assets/daisy.svg') center / contain no-repeat;
-  pointer-events: none;
-}
-.card-head {
-  padding-bottom: 14px;
-  border-bottom: 2px solid #aaa18e;
-  font-size: 1.9rem;
-  font-weight: 400;
-  line-height: 1.5;
-}
-.card-cat, .card-time, .card-rows .k, .card-rows .v, .card .act, .card .phrase {
-  font-weight: 400;
-}
-.card-rows { gap: 12px; }
-.card-rows li {
-  align-items: baseline;
-  border-bottom: 1px solid #bcb3a178;
-  padding: 8px 0 12px;
-  font-size: 1.25rem;
-  line-height: 1.65;
-}
-.card-rows li::before {
-  content: '';
-  flex: 0 0 17px;
-  height: 17px;
-  border: 2px solid #a59a84;
-  border-radius: 3px;
-  align-self: flex-start;
-  margin-top: .4em;
-}
-.card-note { font-size: 1.2rem; }
-.card-ic { background: #efe5cf; box-shadow: none; border-radius: 8px; }
-.card-time { background: #f5ecd9; }
-.board.is-flip .card { height: 29rem; min-height: 29rem; }
-@media (max-width: 600px) {
-  .card, .board.is-flip .card { padding: 38px 18px 76px; }
-  .card-head { font-size: 1.65rem; }
-  .card-rows li { font-size: 1.15rem; }
-  .board.is-flip .card { height: 32rem; min-height: 32rem; }
-}
 /* 撕页年历：装订孔、叠纸、虚线撕口与卷角 */
 .calendar {
   position: relative;
@@ -1680,32 +1608,6 @@ body[data-mode="child"] .only-elder { display: none !important; }
   .cal-day { min-height: 65px; font-size: 1.2rem; border-radius: 2px; }
   .cal-dot { font-size: .6rem; }
 }
-/* 植物直接生长在能量轨道上，与累计成长百分比同步。 */
-.garden { align-content: center; overflow: visible; }
-.garden > .garden-kicker { font-size: 1.45rem; margin: 0; }
-.garden-info { min-width: 0; }
-.garden .energy-bar { position: relative; overflow: visible; margin: 158px 54px 54px; height: 22px; }
-.garden .energy-fill { border-radius: inherit; transition: width .75s ease; }
-.garden .plant-scene {
-  position: absolute; left: var(--growth-progress, 0%); bottom: 12px;
-  width: 130px; height: 140px; transform: translateX(-50%);
-  display: flex; flex-direction: column; align-items: center;
-  transition: left .75s ease;
-}
-.garden .plant-main { width: 130px; height: 130px; flex-shrink: 0; }
-.plant-main picture, .plant-main img { display: block; width: 100%; height: 100%; object-fit: contain; }
-.garden .plant-stage { position: absolute; top: 162px; margin: 0; white-space: nowrap; font-size: 1rem; }
-.garden .stage-track { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
-.garden .stage-track li { background: transparent; border: 0; border-top: 2px solid var(--line); border-radius: 0; padding: 10px 2px; font-size: .85rem; }
-.garden .stage-track li.now { border-color: var(--good); color: var(--good); }
-@media (max-width: 600px) {
-  .garden .energy-bar { margin-left: 42px; margin-right: 42px; }
-  .garden .stage-track .ic { display: none; }
-  .garden .stage-track li { font-size: .8rem; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .garden .plant-scene, .garden .plant-main, .garden .energy-fill { transition: none; animation: none; }
-}
 /* 今日为主，月历按需展开。 */
 .calendar .tear-calendar { width: min(100%, 420px); margin: 18px 0 24px; }
 .tear-today-label { display: inline-block; padding: 2px 20px; margin-bottom: 10px; background: #8e4d37; color: #fffaf0; border-radius: 3px; font-size: 1.3rem; letter-spacing: .15em; }
@@ -1750,80 +1652,12 @@ body[data-mode="child"] .only-elder { display: none !important; }
   .pager-dots .pager-dot { flex-basis: 110px; min-width: 110px; }
   .board-stage .pager-side { width: 100%; }
 }
-/* 顶部切换视角，任务概览与植物成长合并呈现。 */
-.app { grid-template-areas: 'tt tt' 'gd gd' 'hd hd'; }
-.page-head { align-items: center; }
-.page-head .mode-area { margin-left: auto; gap: 0; }
-.page-head .mode-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
-.page-head .mode-switch { background: transparent; border: 0; box-shadow: none; gap: 0; padding: 0; border-radius: 0; }
-.page-head .mode-btn { min-height: 60px; padding: 10px 16px; font-size: 1rem; font-weight: 400; border-radius: 0; color: var(--ink-soft); }
-.page-head .mode-btn.is-on { background: transparent; color: var(--accent); border-bottom: 2px solid #a98a52; box-shadow: none; }
-.page-head .brand-date { margin-left: 12px; }
-.app .app-header { background: transparent; border: 0; border-radius: 0; box-shadow: none; padding: 4px 0; display: flex; flex-wrap: wrap; align-items: center; gap: 20px; }
-.app-header .header-actions { flex: 1; align-items: center; }
-.app-header .btn-emergency { width: auto; min-height: 60px; font-size: 1.1rem; padding: 12px 24px; }
-.app-header .btn-award { background: transparent; border: 0; box-shadow: none; font-weight: 400; padding: 12px; }
-.app-header .textsize { margin-left: auto; flex-direction: row; align-items: center; }
-.garden .today-summary { background: transparent; border: 0; border-radius: 0; box-shadow: none; padding: 0; display: grid; grid-template-columns: 1fr auto; gap: 6px 20px; align-items: center; }
-.garden .sum-count { font-size: 1.3rem; font-weight: 400; }
-.garden .sum-streak { font-size: 1rem; font-weight: 400; grid-column: 1; }
-.garden .btn-speak { grid-column: 2; grid-row: 1 / 3; width: auto; border: 0; background: transparent; box-shadow: none; font-size: 1rem; font-weight: 400; padding: 10px; }
-@media (max-width: 700px) {
-  .page-head .mode-area { margin-left: auto; }
-  .page-head .brand-date { flex-basis: 100%; margin-left: 0; }
-  .page-head .mode-btn { padding: 8px 10px; }
-  .garden .today-summary { grid-template-columns: 1fr; }
-  .garden .btn-speak { grid-column: 1; grid-row: auto; justify-content: flex-start; }
-  .app-header .header-actions { flex-basis: 100%; }
-  .app-header .textsize { flex-wrap: wrap; }
-}
-/* 花园融入页面，打卡后在原处展示成长反馈。 */
-.app .garden { background: transparent; border: 0; border-radius: 0; box-shadow: none; padding: 16px 8px 24px; gap: 12px; }
-.garden .garden-hint { display: none; }
-.garden .energy-bar { height: 8px; border: 0; background: #dedbc9; margin-top: 145px; }
-.garden .plant-scene { bottom: 0; }
-.garden .plant-stage { top: 150px; }
-.garden .energy-next { margin-top: 8px; font-size: .95rem; }
-.garden.checkin-growth .plant-main { animation: checkin-sprout 4s ease both; }
-.garden.checkin-growth .plant-stage::after { content: '  +100'; color: #a27e35; }
-@keyframes checkin-sprout {
-  0% { transform: scale(.65); filter: drop-shadow(0 0 0 #dfc57e00); }
-  25% { transform: scale(1.5); filter: drop-shadow(0 0 14px #dfc57e80); }
-  70% { transform: scale(1.4); filter: drop-shadow(0 0 20px #dfc57e60); }
-  100% { transform: scale(var(--grow, 1)); filter: none; }
-}
-@media (prefers-reduced-motion: reduce) { .garden.checkin-growth .plant-main { animation: none; } }
-/* 生长由逐帧枝叶形变呈现，不再用缩放模拟。 */
-.garden .plant-main, .garden.checkin-growth .plant-main { transform: none; animation: none; transition: none; filter: none; }
-.garden .plant-main { width: 172px; height: 172px; }
-.garden .plant-scene { height: 172px; width: 172px; bottom: -4px; }
-.garden .energy-bar { margin-top: 180px; }
-.garden .plant-stage { top: 186px; }
 @font-face {
   font-family: 'Suisuinian Brand';
   src: url('../assets/fonts/LongCang-Regular.ttf') format('truetype');
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-}
-.page-head { gap: 8px 24px; padding-bottom: 16px; border-bottom: 1px solid #dfd4bd70; }
-.page-head .brand-title {
-  font-family: 'Suisuinian Brand', 'KaiTi', 'STKaiti', cursive;
-  font-size: 3.2rem;
-  font-weight: 400;
-  line-height: 1.3;
-  letter-spacing: .12em;
-  color: #765b30;
-  gap: 10px;
-}
-.page-head .ic-brand { width: 28px; height: 28px; opacity: .75; }
-.page-head .brand-sub { font-size: .95rem; font-weight: 400; color: #756c5b; letter-spacing: .08em; }
-.page-head .brand-date { font-size: .9rem; color: #756c5b; }
-@media (max-width: 700px) {
-  .page-head { gap: 6px 12px; }
-  .page-head .brand-title { font-size: 2.8rem; }
-  .page-head .brand-sub { flex-basis: 100%; order: 3; }
-  .page-head .brand-date { order: 4; font-size: .85rem; }
 }
 /* 家人近况：轻量时间线，避免多层容器。 */
 .app .notice-bar { background: transparent; border: 0; border-radius: 0; box-shadow: none; padding: 20px 8px 24px; }
@@ -1844,4 +1678,178 @@ body[data-mode="child"] .only-elder { display: none !important; }
 .notice-empty { font-size: 1rem; color: #827764; padding: 4px 0; }
 @media (max-width: 600px) {
   .notice-item { grid-template-columns: minmax(0, 1fr); gap: 2px; padding-left: 18px; }
+}
+
+/* 家庭手账：首页按阅读顺序排列，数据变更时保持阅读位置。 */
+:root {
+  --bg: #faf9f4;
+  --ink: #253d34;
+  --ink-soft: #43594e;
+  --ink-mute: #586659;
+  --accent: #2d5849;
+  --good: #2e664a;
+  --line: #d7ded2;
+  --c-medicine: #9a552e;
+  --c-phone: #28657c;
+  --c-travel: #387052;
+  --c-message: #934f6f;
+  --r-md: 12px;
+  --r-lg: 18px;
+}
+body { background-image: none; }
+.app { display: flex; flex-direction: column; max-width: 1296px; gap: 24px; padding: 16px clamp(16px, 4vw, 56px) 40px; }
+.app button, .app summary { touch-action: manipulation; }
+.page-head { display: flex; align-items: center; gap: 14px; padding: 0 0 15px; border-bottom: 1px solid #dce0d6; }
+.brand { display: flex; align-items: center; gap: 14px; margin-right: auto; }
+.brand-title { font: 400 2.65rem/1.12 'Suisuinian Brand', KaiTi, cursive; white-space: nowrap; color: #274b3c; gap: 9px; }
+.brand-title .ic { width: 40px; height: 40px; padding: 3px; background: #2c5544; color: #fff4cf; border-radius: 13px 13px 13px 3px; }
+.brand-sub { padding-left: 14px; border-left: 1px solid #cbd4c9; color: var(--ink-mute); font-size: .85rem; font-weight: 500; }
+.mode-label, .type-menu .textsize-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.mode-switch, .board-view-switch { display: inline-flex; gap: 2px; border-radius: 12px; background: #ebeee6; border: 1px solid #dce1d7; box-shadow: none; padding: 3px; }
+.mode-btn, .bv-btn { min-height: 60px; border-radius: 9px; padding: 6px 14px; font-size: .9rem; font-weight: 600; white-space: nowrap; }
+.mode-btn.is-on, .bv-btn.is-on { background: #fff; color: var(--accent); box-shadow: 0 1px 4px #283e3224; }
+.page-head .btn-emergency { width: auto; min-height: 60px; background: #fff3ee; color: #91392b; border: 1px solid #deb9ac; border-radius: 12px; padding: 8px 14px; font-size: .95rem; box-shadow: none; }
+.type-menu { position: relative; }
+.type-menu summary { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 60px; padding: 0 12px; cursor: pointer; font-size: .9rem; font-weight: 600; }
+.type-menu summary::-webkit-details-marker { display: none; }
+.type-menu summary::after { content: ''; width: 7px; height: 7px; border: solid currentColor; border-width: 0 1.5px 1.5px 0; transform: rotate(45deg); }
+.type-menu[open] summary::after { transform: rotate(225deg); }
+.type-menu .textsize { position: absolute; z-index: 10; top: 100%; right: 0; min-width: 215px; border-radius: 14px; background: white; box-shadow: 0 8px 30px #2434282b; }
+.type-menu .ts-btn { min-height: 60px; }
+.overview { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 20px; }
+.day-brief, .app .garden { border-radius: 20px; overflow: hidden; position: relative; isolation: isolate; min-width: 0; }
+.day-brief { display: grid; align-content: center; justify-items: start; padding: 26px 32px; color: #fffdf4; background: #264e40; }
+.day-brief::before, .day-brief::after { position: absolute; z-index: -1; content: ''; pointer-events: none; }
+.day-brief::before { inset: 0; opacity: .18; background: repeating-radial-gradient(ellipse at 108% 120%, transparent 0 28px, #c6d5ad 29px 30px, transparent 31px 43px); mask-image: linear-gradient(105deg, transparent 40%, #000); }
+.day-brief::after { right: 3%; bottom: -15px; width: 28%; height: 76%; background: url('../assets/daisy.svg') bottom right / contain no-repeat; opacity: .65; transform: rotate(8deg); }
+.dateline { margin: 0 0 6px; font-size: .9rem; font-weight: 550; color: #deead6; font-variant-numeric: tabular-nums; }
+.day-brief h2 { font: 400 clamp(2rem, 4vw, 2.85rem)/1.25 'Memo Handwriting', KaiTi, serif; }
+.day-progress { margin: 8px 0 18px; font-size: 1rem; }
+.day-actions { display: flex; flex-wrap: wrap; }
+.day-actions .btn { gap: 8px; min-height: 60px; width: auto; padding: 8px 18px; border: 0; border-radius: 12px; background: #fff7d8; color: #254936; box-shadow: none; font-size: 1rem; }
+.app .garden {
+  grid-area: auto; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; align-content: space-between; gap: 12px;
+  padding: 24px 28px 18px; border: 1px solid #cdd9c5; box-shadow: none;
+  background: radial-gradient(ellipse at 112% 59%, #c4d8b8 0 22%, transparent 22.4%),
+    radial-gradient(circle at 83% 35%, #f4e4a7 0 38px, transparent 39px),
+    linear-gradient(132deg, #f3f5e8, #e5eddc);
+}
+.garden-kicker { font: 400 1.65rem/1.3 'Memo Handwriting', KaiTi, serif; color: #2b4939; }
+.garden-title { font-size: .98rem; margin: 4px 0; font-weight: 500; }
+.garden .energy-num { margin: 0 .12em; font: 650 1.8rem/1.25 Georgia, serif; color: #2b513b; }
+.garden .energy-next { margin: 0; font-size: .85rem; color: #415442; }
+.garden .plant-scene { display: grid; justify-items: center; align-content: end; width: clamp(84px, 9vw, 128px); height: auto; padding: 0; border: 0; background: none; font: inherit; }
+.garden .plant-main, .plant-main img, .plant-main picture { display: block; width: 100%; height: auto; }
+.garden .plant-stage { margin: 0; padding: 0 10px; border-radius: 20px; background: #f7f9e9; color: #39543c; box-shadow: none; font-size: .82rem; }
+.garden-track { grid-column: 1 / -1; }
+.garden .energy-bar { height: 7px; border: 0; background: #c5d3bb; margin: 10px 0; }
+.garden .stage-track { display: flex; justify-content: space-between; gap: 6px; margin: 0; }
+.garden .stage-track li { padding: 0; background: none; border: 0; font-size: .8rem; color: #53644f; font-weight: 450; }
+.garden .stage-track li.now { color: #284b36; font-weight: 750; box-shadow: none; }
+.garden .stage-track .ic { display: none; }
+
+.memo-section { min-width: 0; }
+.board-head { margin: 0; gap: 12px; }
+.board-head-main { align-items: center; gap: 12px; }
+.board-title { font: 400 1.85rem/1.25 'Memo Handwriting', KaiTi, serif; color: #2a4637; }
+.board-count { color: var(--ink-mute); font-size: .9rem; }
+.bv-btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
+.board-tools { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 12px 0 20px; padding: 9px 0; border-block: 1px solid var(--line); }
+.filter-tabs { gap: 4px; min-width: 0; padding: 0; }
+.tab { gap: 5px; padding: 6px 14px; background: transparent; border: 0; box-shadow: none; color: #506154; border-radius: 12px; font-size: .95rem; font-weight: 550; }
+.tab .ic { width: 24px; height: 24px; color: var(--cat); }
+.tab.is-on, .tab.is-on:hover { background: #315c48; color: white; box-shadow: none; }
+.tab.is-on .ic { color: inherit; }
+.tab:hover:not(.is-on) { transform: none; background: #e9eee4; box-shadow: none; }
+.pending-control { display: inline-flex; align-items: center; gap: 8px; min-height: 60px; font-size: .9rem; white-space: nowrap; cursor: pointer; }
+.pending-control input { width: 20px; height: 20px; margin: 0; accent-color: var(--accent); }
+.board:not(.is-flip) { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; align-items: start; }
+.card, .board.is-flip .card { height: auto; min-height: 0; gap: 14px; padding: 22px 24px; border: 1px solid #d9ded3; border-top: 4px solid var(--cat); border-radius: 16px; background: #fffefa; box-shadow: 0 3px 12px #253d3410; }
+.card::before { content: none; }
+.card-top { gap: 9px; }
+.card-ic { width: 38px; height: 38px; padding: 6px; border-radius: 12px; box-shadow: none; }
+.card-cat, .card-time { font-size: .95rem; }
+.card-head { padding: 0; color: var(--ink); font-size: 1.5rem; }
+.card-rows li { display: grid; grid-template-columns: minmax(4.5em, auto) 1fr; gap: 10px; align-items: baseline; font-size: 1rem; }
+.card-rows .v { font-weight: 550; min-width: 0; }
+.card-rows .k, .card-note, .phrase-meta { color: var(--ink-mute); }
+.card-note, .phrase-meta { font-size: .9rem; }
+.card-actions { gap: 10px; padding-top: 14px; border-top: 1px solid #e1e5dc; }
+.act, .phrase { box-shadow: none; font-size: 1rem; border-radius: 12px; min-height: 60px; }
+.act { border: 1px solid #c7d2c7; color: var(--accent); }
+.act-done, .act-call { color: #fff; border-color: transparent; }
+.act:disabled { background: #edf1e8; color: #4b5d4b; cursor: default; }
+.act .ic { width: 24px; height: 24px; }
+.board.is-flip .card { overflow: visible; }
+.board.is-flip .deck-sheet { align-self: stretch; }
+.board-empty { margin: 0; }
+.calendar .btn-award, .foot-tools .btn { border: 1px solid #cdd6ca; background: #fffefa; color: #385641; box-shadow: none; border-radius: 12px; font-size: .95rem; }
+.calendar { display: grid; grid-template-columns: minmax(0, 1fr) minmax(180px, 280px); align-items: center; gap: 12px 28px; border-radius: 18px; }
+.calendar .tear-calendar { margin: 0; padding: 25px 14px 12px; }
+.calendar .tear-date { font-size: 3.6rem; }
+.calendar .tear-today-label { display: none; }
+.calendar .tear-year, .calendar .tear-week { font-size: 1.05rem; }
+.calendar .tear-message { margin-top: 6px; padding-top: 6px; }
+.calendar-history { grid-column: 1 / -1; }
+.calendar .cal-head { flex-direction: column; align-items: flex-start; }
+.app-footer { border-top: 1px solid var(--line); color: var(--ink-mute); }
+@media (max-width: 960px) {
+  .brand-sub { display: none; }
+  .tab { padding-inline: 10px; }
+  .board-tools { flex-wrap: wrap; gap: 0; }
+}
+@media (max-width: 720px) {
+  .app { gap: 16px; }
+  .page-head { display: grid; grid-template-columns: minmax(0,1fr) auto auto; gap: 5px 8px; }
+  .brand-title { font-size: 2.25rem; }
+  .page-head .mode-area { grid-column: 1 / -1; grid-row: 2; }
+  .mode-switch { display: flex; }
+  .mode-switch button { flex: 1; }
+  .type-menu .textsize { right: -30px; }
+  .overview { grid-template-columns: 1fr; gap: 12px; }
+  .day-brief { padding: 20px; }
+  .day-brief::after { max-width: 100px; opacity: .2; }
+  .app .garden { padding: 16px 20px; gap: 4px 12px; }
+  .garden .plant-scene { width: 80px; }
+  .garden .garden-kicker { font-size: 1.35rem; }
+  .garden .energy-num { font-size: 1.45rem; }
+  .board-head { align-items: center; }
+  .board-head-main { gap: 5px; }
+  .board-count { flex-basis: auto; }
+  .bv-btn { padding-inline: 8px; }
+  .board-view-switch .ic { display: none; }
+  .board-tools { margin: 8px 0 12px; }
+  .filter-tabs { width: 100%; flex-wrap: nowrap; overflow-x: auto; }
+  .filter-tabs .tab { flex: none; }
+  .board:not(.is-flip) { grid-template-columns: minmax(0,1fr); }
+  .board.is-flip { padding-inline: 20px; }
+  .card, .board.is-flip .card { padding: 16px; }
+  .card-actions { grid-template-columns: repeat(auto-fit,minmax(min(100%, 6.5rem),1fr)); }
+  .calendar { grid-template-columns: minmax(0, 1fr); padding: 20px 14px; }
+  .calendar .tear-calendar { justify-self: center; width: min(76%, 280px); margin-top: 18px; }
+  .type-menu summary { padding-inline: 5px; }
+  .page-head .btn-emergency { padding-inline: 8px; }
+}
+@media (max-width: 380px) {
+  .page-head { gap: 4px; }
+  .brand-title { font-size: 1.85rem; gap: 3px; }
+  .brand-title .ic { width: 30px; height: 30px; }
+}
+
+.day-actions { column-gap: 14px; align-items: center; }
+.brief-link { min-height: 60px; padding: 0 4px; font: inherit; font-weight: 600; color: #fffaf0; background: transparent; border: 0; text-decoration: underline; text-underline-offset: 6px; cursor: pointer; }
+.calendar .cal-head > div:first-child { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; }
+@media (max-width: 720px) {
+  .page-head { grid-template-columns: minmax(0, 1fr) auto; }
+  .page-head .brand { grid-column: 1; grid-row: 1; }
+  .page-head .brand-title { font-size: clamp(1.3rem, 10vw, 2.25rem); }
+  .page-head .btn-emergency { grid-column: 2; grid-row: 1; }
+  .page-head .mode-area { grid-column: 1 / -1; grid-row: 2; justify-self: start; }
+  .page-head .type-menu { grid-column: 2; grid-row: 2; justify-self: end; }
+  .type-menu .textsize { right: 0; }
+  .board-count { font-size: .82rem; }
+  .board-head { gap: 4px; }
+  .board-title { font-size: 1.5rem; }
+  .day-actions { column-gap: 8px; }
+  .board-head-main { flex-wrap: wrap; }
 }

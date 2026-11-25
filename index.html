@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#FFFDF7" />
 <title>岁岁念 · 卡片式银发温情备忘录</title>
 <meta name="description" content="Hack4Good 技术向善作品：适老化卡片备忘 + 游戏化亲情正反馈，纯前端运行，数据保存在本机浏览器。" />
-<link rel="stylesheet" href="css/styles.css?v=20261124-timeline" />
+<link rel="stylesheet" href="css/styles.css?v=20261125-memo" />
 </head>
 <body data-mode="elder">
 
@@ -14,6 +14,8 @@
        形状只依赖 currentColor 与 --bloom 两个变量，因此选中态（白字底）也能自动反色。 -->
   <svg class="ic-defs" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
     <defs>
+      <symbol id="ic-grid" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" d="M3 4h7v7H3zM14 4h7v7h-7zM3 15h7v6H3zM14 15h7v6h-7z"/></symbol>
+      <symbol id="ic-book" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M3 4q5-1 9 2 4-3 9-2v15q-5-1-9 2-4-3-9-2zM12 6v15"/></symbol>
       <symbol id="ic-medicine" viewBox="0 0 32 32">
         <g transform="rotate(-30 16 15)">
           <rect x="6" y="11" width="20" height="8" rx="4" fill="currentColor" opacity=".3"/>
@@ -106,9 +108,10 @@
   <main id="app" class="app" aria-label="岁岁念主界面">
 
     <header class="page-head">
-      <h1 class="brand-title"><svg class="ic ic-brand"><use href="#ic-logo"/></svg>岁岁念</h1>
-      <p class="brand-sub">卡片式银发温情备忘录</p>
-      <p class="brand-date" id="todayLine">今天是 ——</p>
+      <div class="brand">
+        <h1 class="brand-title"><svg class="ic" aria-hidden="true"><use href="#ic-logo"/></svg>岁岁念</h1>
+        <p class="brand-sub">家庭关怀备忘录</p>
+      </div>
       <div class="mode-area">
         <p class="mode-label" id="modeLabel">当前视角：长辈卡片模式</p>
         <div class="mode-switch" role="group" aria-label="视角切换">
@@ -116,18 +119,8 @@
           <button type="button" class="mode-btn" id="modeChild" aria-pressed="false">子女视角</button>
         </div>
       </div>
-
-    </header>
-
-    <section class="app-header" aria-label="常用设置">
-      <button type="button" class="btn btn-emergency" id="emergencyBtn">
-        <svg class="ic"><use href="#ic-alert"/></svg><span class="only-elder">我不舒服</span><span class="only-child">设置紧急求助信息</span>
-      </button>
-
-      <div class="header-actions">
-        <button type="button" class="btn btn-award" id="reportBtn">年度亲情战绩报告</button>
-        <button type="button" class="btn btn-primary only-child" id="composerBtn" hidden>给爸妈设置提醒</button>
-
+      <details class="type-menu">
+        <summary>字号</summary>
         <div class="textsize" role="group" aria-label="字号大小">
           <span class="textsize-label">字号</span>
           <div class="textsize-btns">
@@ -136,7 +129,100 @@
             <button type="button" class="ts-btn" data-size="xlarge" aria-pressed="false">特大</button>
           </div>
         </div>
+      </details>
+      <button type="button" class="btn btn-emergency" id="emergencyBtn">
+        <svg class="ic"><use href="#ic-alert"/></svg><span class="only-elder">我不舒服</span><span class="only-child">求助信息</span>
+      </button>
+    </header>
+
+    <div class="overview">
+      <section class="day-brief" aria-labelledby="dayHeading">
+        <p id="todayLine" class="dateline"></p>
+        <h2 id="dayHeading">今日待办</h2>
+        <p class="day-progress" id="dayProgress"></p>
+        <div class="day-actions">
+          <button type="button" class="btn btn-speak only-elder" id="speakAllBtn" aria-pressed="false"><svg class="ic" aria-hidden="true"><use href="#ic-sound"/></svg><span id="speakAllLabel">朗读今日待办</span></button>
+          <button type="button" class="brief-link only-elder" id="openPendingBtn">查看待办</button>
+          <button type="button" class="btn btn-primary only-child" id="composerBtn" hidden>＋ 添加提醒</button>
+        </div>
+      </section>
+      <section class="garden" id="gardenPanel" aria-label="亲情暖心花园">
+        <div class="garden-copy">
+          <h2 class="garden-kicker">亲情花园</h2>
+          <p class="garden-title">亲情能量 <strong class="energy-num" id="energyNum">0</strong> 点</p>
+          <p class="energy-next" id="energyNext"></p>
+        </div>
+        <button type="button" class="plant-scene" aria-label="查看植物成长进度" id="plantScene" data-stage="0">
+          <span class="plant-main" id="plantMain"></span>
+          <span class="plant-stage" id="plantStage">小嫩芽</span>
+        </button>
+        <div class="garden-track">
+          <div class="energy-bar" role="progressbar" aria-label="亲情花园成长进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="energyBar"><div class="energy-fill" id="energyFill"></div></div>
+          <ol class="stage-track" id="stageTrack">
+            <li data-stage="0"><svg class="ic"><use href="#ic-sprout"/></svg>小嫩芽</li>
+            <li data-stage="1"><svg class="ic"><use href="#ic-bud"/></svg>含苞待放</li>
+            <li data-stage="2"><svg class="ic"><use href="#ic-blossom"/></svg>繁花盛开</li>
+            <li data-stage="3"><svg class="ic"><use href="#ic-fruit"/></svg>硕果累累</li>
+          </ol>
+        </div>
+      </section>
+    </div>
+
+    <section class="composer only-child" id="composer" hidden aria-label="子女守护设置面板">
+      <h2 class="composer-title" id="composerTitle">给爸妈添加提醒</h2>
+
+      <p class="field-label">① 先选种类</p>
+      <div class="cat-pick" id="catPick" role="group" aria-label="卡片种类"></div>
+
+      <p class="field-label">② 选用模板（可跳过）</p>
+      <div class="tpl-pick" id="tplPick"></div>
+
+      <p class="field-label">③ 填写提醒内容</p>
+      <div class="field-rows" id="fieldRows"></div>
+
+      <div class="composer-actions">
+        <button type="button" class="btn btn-primary" id="saveCardBtn">保存到爸妈的卡片</button>
+        <button type="button" class="btn btn-ghost" id="closeComposerBtn">取消</button>
       </div>
+    </section>
+    <section class="memo-section" aria-labelledby="boardTitle">
+      <div class="board-head">
+        <div class="board-head-main">
+          <h2 class="board-title" id="boardTitle">今日备忘</h2>
+          <p class="board-count" id="boardCount"></p>
+        </div>
+        <div class="board-view-switch" role="group" aria-label="卡片查看方式">
+          <button type="button" class="bv-btn is-on" id="viewGridBtn" aria-pressed="true"><svg class="ic" aria-hidden="true"><use href="#ic-grid"/></svg>列表看</button>
+          <button type="button" class="bv-btn" id="viewFlipBtn" aria-pressed="false"><svg class="ic" aria-hidden="true"><use href="#ic-book"/></svg>翻页看</button>
+        </div>
+      </div>
+      <div class="board-tools">
+        <nav class="filter-tabs" aria-label="卡片分类筛选">
+          <button type="button" class="tab is-on" data-filter="all" aria-pressed="true">全部</button>
+          <button type="button" class="tab tab-medicine" data-filter="medicine" aria-pressed="false"><svg class="ic"><use href="#ic-medicine"/></svg>按时吃药</button>
+          <button type="button" class="tab tab-phone" data-filter="phone" aria-pressed="false"><svg class="ic"><use href="#ic-phone"/></svg>亲友电话</button>
+          <button type="button" class="tab tab-travel" data-filter="travel" aria-pressed="false"><svg class="ic"><use href="#ic-travel"/></svg>出行提醒</button>
+          <button type="button" class="tab tab-message" data-filter="message" aria-pressed="false"><svg class="ic"><use href="#ic-message"/></svg>家人留言</button>
+        </nav>
+        <label class="pending-control"><input type="checkbox" id="pendingOnly">只看待办</label>
+      </div>
+      <div class="board-stage" id="boardStage">
+        <button type="button" class="btn pager-side pager-prev" id="prevPageBtn" aria-label="上一张">
+          <span class="pager-arrow" aria-hidden="true">←</span>
+          <span class="pager-word">上一张</span>
+        </button>
+        <div class="board" id="board" tabindex="-1"></div>
+        <button type="button" class="btn pager-side pager-next" id="nextPageBtn" aria-label="下一张">
+          <span class="pager-arrow" aria-hidden="true">→</span>
+          <span class="pager-word">下一张</span>
+        </button>
+      </div>
+      <div class="board-pager" id="boardPager" aria-label="备忘录底部滚动预览">
+        <span class="pager-text" id="pagerText">第 1 / 4 张</span>
+        <div class="pager-dots" id="pagerDots"></div>
+      </div>
+      <p class="board-empty" id="boardEmpty" hidden>这个分类还没有卡片，切到「子女守护模式」为爸妈加一张吧。</p>
+
     </section>
 
     <section class="notice-bar only-child" id="noticeBar" hidden aria-live="polite" aria-label="家人近况">
@@ -148,40 +234,11 @@
       <p class="notice-empty" id="noticeEmpty">还没有新的近况。</p>
     </section>
 
-    <section class="garden" id="gardenPanel" aria-label="亲情暖心花园">
-      <p class="garden-kicker">亲情暖心花园</p>
-      <section class="today-summary only-elder" aria-label="今日概览">
-        <p class="sum-count">今天 <span class="sum-num" id="sumTotal">4</span> 件事 · 已办妥 <span class="sum-num" id="sumDone">0</span> 件</p>
-        <p class="sum-streak" id="sumStreak">还没有打卡记录，办妥一张就从今天开始</p>
-        <button type="button" class="btn btn-speak" id="speakAllBtn" aria-pressed="false">
-          <svg class="ic"><use href="#ic-sound"/></svg><span id="speakAllLabel">把今天的事念给我听</span>
-        </button>
-      </section>
-
-      <div class="garden-info">
-        <h2 class="garden-title">亲情能量 <span class="energy-num" id="energyNum">0</span> 点</h2>
-        <div class="energy-bar" role="progressbar" aria-label="亲情花园成长进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="energyBar">
-          <div class="energy-fill" id="energyFill"></div>
-          <div class="plant-scene" id="plantScene" data-stage="0">
-            <span class="plant-main" id="plantMain"></span>
-            <span class="plant-stage" id="plantStage">小嫩芽</span>
-          </div>
-        </div>
-        <p class="energy-next" id="energyNext">再攒 300 点，小树就含苞待放啦</p>
-        <ol class="stage-track" id="stageTrack">
-          <li data-stage="0"><svg class="ic"><use href="#ic-sprout"/></svg>小嫩芽</li>
-          <li data-stage="1"><svg class="ic"><use href="#ic-bud"/></svg>含苞待放</li>
-          <li data-stage="2"><svg class="ic"><use href="#ic-blossom"/></svg>繁花盛开</li>
-          <li data-stage="3"><svg class="ic"><use href="#ic-fruit"/></svg>硕果累累</li>
-        </ol>
-        <p class="garden-hint">每点一次「我办妥了」，能量 +100，花园就长大一点。</p>
-      </div>
-    </section>
-
     <section class="calendar" id="calendarPanel" aria-label="打卡日历">
       <div class="cal-head">
         <div>
-          <h2 class="cal-title">📅 打卡日历</h2>
+          <h2 class="cal-title">打卡日历</h2>
+          <button type="button" class="btn btn-award" id="reportBtn">年度亲情报告</button>
 
         </div>
         <div class="cal-streak">
@@ -221,66 +278,12 @@
       </details>
     </section>
 
-    <nav class="filter-tabs" aria-label="卡片分类筛选">
-      <button type="button" class="tab is-on" data-filter="all" aria-pressed="true">全部</button>
-      <button type="button" class="tab tab-medicine" data-filter="medicine" aria-pressed="false"><svg class="ic"><use href="#ic-medicine"/></svg>按时吃药</button>
-      <button type="button" class="tab tab-phone" data-filter="phone" aria-pressed="false"><svg class="ic"><use href="#ic-phone"/></svg>亲友电话</button>
-      <button type="button" class="tab tab-travel" data-filter="travel" aria-pressed="false"><svg class="ic"><use href="#ic-travel"/></svg>出行提醒</button>
-      <button type="button" class="tab tab-message" data-filter="message" aria-pressed="false"><svg class="ic"><use href="#ic-message"/></svg>给孩子的留言</button>
-    </nav>
-
-    <section class="composer only-child" id="composer" hidden aria-label="子女守护设置面板">
-      <h2 class="composer-title" id="composerTitle">远程为爸妈添加一张大卡片</h2>
-
-      <p class="field-label">① 先选种类</p>
-      <div class="cat-pick" id="catPick" role="group" aria-label="卡片种类"></div>
-
-      <p class="field-label">② 或者直接用温情模板（不用打字）</p>
-      <div class="tpl-pick" id="tplPick"></div>
-
-      <p class="field-label">③ 检查一下内容，确认字号都够大</p>
-      <div class="field-rows" id="fieldRows"></div>
-
-      <div class="composer-actions">
-        <button type="button" class="btn btn-primary" id="saveCardBtn">保存到爸妈的卡片</button>
-        <button type="button" class="btn btn-ghost" id="closeComposerBtn">取消</button>
-      </div>
-    </section>
-
-    <div class="board-head">
-      <div class="board-head-main">
-        <h2 class="board-title" id="boardTitle">今日备忘卡片</h2>
-        <p class="board-count" id="boardCount"></p>
-      </div>
-      <div class="board-view-switch" role="group" aria-label="卡片查看方式">
-        <button type="button" class="bv-btn is-on" id="viewFlipBtn" aria-pressed="true">📖 翻页看</button>
-        <button type="button" class="bv-btn" id="viewGridBtn" aria-pressed="false">🗂️ 全部摊开</button>
-      </div>
-    </div>
-
-    <div class="board-stage" id="boardStage">
-      <button type="button" class="btn pager-side pager-prev" id="prevPageBtn" aria-label="上一张">
-        <span class="pager-arrow" aria-hidden="true">←</span>
-        <span class="pager-word">上一张</span>
-      </button>
-      <main class="board is-flip" id="board" tabindex="-1"></main>
-      <button type="button" class="btn pager-side pager-next" id="nextPageBtn" aria-label="下一张">
-        <span class="pager-arrow" aria-hidden="true">→</span>
-        <span class="pager-word">下一张</span>
-      </button>
-    </div>
-    <div class="board-pager" id="boardPager" aria-label="备忘录底部滚动预览">
-      <span class="pager-text" id="pagerText">第 1 / 4 张</span>
-      <div class="pager-dots" id="pagerDots"></div>
-    </div>
-    <p class="board-empty" id="boardEmpty" hidden>这个分类还没有卡片，切到「子女守护模式」为爸妈加一张吧。</p>
-
     <footer class="app-footer">
       <p>岁岁念 · Hack4Good「技术向善」参赛作品 · 游戏设计 × 智慧养老</p>
-      <p>纯前端运行，所有卡片与打卡进度只保存在本机浏览器（localStorage）；语音由浏览器内置朗读，无需联网、不上传任何信息。</p>
+      <p>卡片、留言和求助信息保存在这台设备的浏览器中。</p>
       <div class="foot-tools">
         <button type="button" class="btn btn-ghost btn-small" id="speakTestBtn">试一下语音</button>
-        <button type="button" class="btn btn-ghost btn-small" id="historyBtn">补一段上周打卡（演示）</button>
+        <button type="button" class="btn btn-ghost btn-small" id="historyBtn">补近三天打卡（演示）</button>
         <button type="button" class="btn btn-ghost btn-small" id="resetBtn">恢复示例数据</button>
       </div>
     </footer>
@@ -344,7 +347,7 @@
       </div>
 
       <div class="emg-edit" id="emgEdit" hidden>
-        <h2 class="emg-title">为爸妈填写紧急求助信息</h2>
+        <h2 class="emg-title" id="emgEditTitle">为爸妈填写紧急求助信息</h2>
         <p class="emg-desc">填一次就长期有效；父母侧用大字显示，也能一键念给对方听。只保存在本机浏览器。</p>
         <div class="field-rows" id="emgRows"></div>
         <div class="emg-actions">
@@ -356,6 +359,6 @@
     </div>
   </div>
 
-  <script src="js/app.js?v=20261124-timeline"></script>
+  <script src="js/app.js?v=20261125-memo"></script>
 </body>
 </html>
