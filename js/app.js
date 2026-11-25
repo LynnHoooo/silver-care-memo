@@ -51,14 +51,14 @@
       name: '出行提醒', icon: 'ic-travel', className: 'card-travel',
       fields: [
         { key: 'heading', label: '去哪儿', placeholder: '例如：社区医院 · 复查血压' },
-        { key: 'line3', label: '出发时间', placeholder: '例如：明天上午 9:30' },
+        { key: 'line3', label: '出发时间', placeholder: '例如：上午 9:30' },
         { key: 'line2', label: '要带的东西', placeholder: '例如：医保卡、病历本、老花镜' },
       ],
       rowLabels: { line3: '出发时间', line2: '随身带' },
       templates: [
-        { heading: '社区医院 · 复查血压', line3: '明天上午 9:30', line2: '医保卡、病历本、老花镜' },
+        { heading: '社区医院 · 复查血压', line3: '上午 9:30', line2: '医保卡、病历本、老花镜' },
         { heading: '人民公园 · 晨练', line3: '早上 7:00', line2: '水杯、毛巾、雨伞' },
-        { heading: '惠民超市 · 买菜', line3: '今天下午 4:00', line2: '购物袋、老年卡、手机' },
+        { heading: '惠民超市 · 买菜', line3: '下午 4:00', line2: '购物袋、老年卡、手机' },
       ],
       praise: [
         '一路平安！您出门前准备得妥妥当当，健康守护值加 100 分！',
@@ -132,6 +132,27 @@
   const dayKey = d => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
   const todayKey = () => dayKey(new Date());
 
+  const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六'];
+
+  function isDue(card, date = new Date()) {
+    const schedule = card.schedule;
+    if (schedule?.kind === 'once') return schedule.date === dayKey(date);
+    if (schedule?.kind === 'weekly') return schedule.weekday === date.getDay();
+    return true;
+  }
+
+  function dueToday() {
+    const date = new Date();
+    return state.cards.filter(card => isDue(card, date));
+  }
+
+  function scheduleLabel(card) {
+    const schedule = card.schedule;
+    if (schedule?.kind === 'once') return schedule.date;
+    if (schedule?.kind === 'weekly') return '每周' + WEEKDAYS[schedule.weekday];
+    return '每天';
+  }
+
   const uid = () => 'c' + Date.now().toString(36) + Math.floor(Math.random() * 1e4).toString(36);
 
   function seedState() {
@@ -145,9 +166,9 @@
       feed: [],
       emergency: {},
       cards: [
-        { id: uid(), type: 'medicine', source: 'child', heading: '早间用药提醒', line2: '请按自己的处方核对药名和用量', line3: '今天 08:00', done: false, doneAt: null },
-        { id: uid(), type: 'phone', source: 'child', heading: '女儿 · 林小满', phone: '138 0000 1234', line2: '晚 7 点到 9 点', line3: '今天 19:30', done: false, doneAt: null },
-        { id: uid(), type: 'travel', source: 'child', heading: '社区医院 · 复查血压', line2: '医保卡、病历本、老花镜', line3: '明天上午 9:30', done: false, doneAt: null },
+        { id: uid(), type: 'medicine', source: 'child', heading: '早间用药提醒', line2: '请按自己的处方核对药名和用量', line3: '08:00', done: false, doneAt: null },
+        { id: uid(), type: 'phone', source: 'child', heading: '女儿 · 林小满', phone: '138 0000 1234', line2: '晚 7 点到 9 点', line3: '19:30', done: false, doneAt: null },
+        { id: uid(), type: 'travel', source: 'child', heading: '社区医院 · 复查血压', line2: '医保卡、病历本、老花镜', line3: '上午 9:30', schedule: { kind: 'once', date: dayKey(shiftDay(new Date(), 1)) }, done: false, doneAt: null },
         { id: uid(), type: 'message', source: 'child', heading: '想对孩子说点什么', line2: '', line3: '随时可以说', done: false, doneAt: null },
       ],
     };
@@ -196,7 +217,6 @@
     state.cards.forEach(c => { c.done = false; c.doneAt = null; });
     save();
     if (announce) {
-      renderHeader();
       render();
       toast('新的一天，印章已清空，今天的卡片可以重新办理啦');
       voice.say('新的一天开始啦，昨天的印章已经收起，今天的卡片可以重新办理了。', 0.9);
@@ -247,12 +267,21 @@
   const reduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   let toastTimer = null;
-  function toast(msg, ms = 3600) {
+  function toast(msg, ms = 3600, undo) {
     const t = $('#toast');
     t.textContent = msg;
+    if (undo) {
+      const button = el('button', 'toast-undo', '撤销打卡');
+      button.type = 'button';
+      button.addEventListener('click', undo);
+      t.appendChild(button);
+    }
     t.classList.add('show');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => t.classList.remove('show'), ms);
+    toastTimer = setTimeout(() => {
+      t.classList.remove('show');
+      t.querySelector('button')?.remove();
+    }, ms);
   }
 
   function fmtClock(iso) {
@@ -403,8 +432,9 @@
   }
 
   function renderSummary() {
-    const total = state.cards.length;
-    const done = state.cards.filter(card => card.done).length;
+    const today = dueToday();
+    const total = today.length;
+    const done = today.filter(card => card.done).length;
     const pending = total - done;
     $('#dayHeading').textContent = pending ? `今天还有 ${pending} 件事` : total ? '今天都办妥了' : '今天还没有提醒';
     const streak = streakDays();
@@ -421,12 +451,13 @@
 
   function speakToday() {
     if (todaySpeaking) { stopSpeakToday(); return; }
-    const pending = state.cards.filter(c => !c.done);
+    const today = dueToday();
+    const pending = today.filter(c => !c.done);
     const d = new Date();
-    const head = `今天是 ${d.getMonth() + 1} 月 ${d.getDate()} 日，一共有 ${state.cards.length} 件事，已经办妥 ${state.cards.length - pending.length} 件。`;
+    const head = `今天是 ${d.getMonth() + 1} 月 ${d.getDate()} 日，一共有 ${today.length} 件事，已经办妥 ${today.length - pending.length} 件。`;
     const list = pending.length
       ? [head].concat(pending.map(c => cardSpeechText(c)))
-      : [head, state.cards.length ? '今天的事全部办妥啦。' : '可以在子女视角添加提醒。'];
+      : [head, today.length ? '今天的事全部办妥啦。' : '可以在子女视角添加提醒。'];
     todaySpeaking = true;
     setSpeakLabel();
     if (!voice.saySeq(list, () => { todaySpeaking = false; setSpeakLabel(); })) {
@@ -434,7 +465,7 @@
       setSpeakLabel();
       return;
     }
-    toast(pending.length ? `正在按顺序念 ${pending.length} 件还没办妥的事，再点一次按钮可停下` : '今天的事都办妥啦，给您念一句总结');
+    toast(pending.length ? `正在按顺序念 ${pending.length} 件还没办妥的事，再点一次按钮可停下` : today.length ? '今天的事都办妥啦，给您念一句总结' : '今天没有安排提醒');
   }
 
   function stopSpeakToday() {
@@ -473,8 +504,13 @@
   /* ============ 紧急求助信息 ============ */
 
   function spacedPhone(v) {
-    const digits = String(v).replace(/\D/g, '');
-    return digits.length === 11 ? `${digits.slice(0, 3)} ${digits.slice(3, 7)} ${digits.slice(7)}` : String(v);
+    const digits = dialNumber(v);
+    return /^\d{11}$/.test(digits) ? `${digits.slice(0, 3)} ${digits.slice(3, 7)} ${digits.slice(7)}` : String(v);
+  }
+
+  function dialNumber(value) {
+    const normalized = String(value || '').normalize('NFKC').replace(/[\s().-]/g, '');
+    return /^\+?\d{3,15}$/.test(normalized) ? normalized : '';
   }
 
   function hasExampleEmergency() {
@@ -485,6 +521,14 @@
   function renderEmergencyView() {
     const isExample = hasExampleEmergency();
     $('#emgView .emg-kicker').textContent = isExample ? '以下为演示资料，请在子女视角填写本人的信息' : '请把下面这些给身边的人看';
+    const link = $('#emgDial');
+    const number = dialNumber(state.emergency.phone);
+    link.hidden = !number || isExample;
+    if (link.hidden) link.removeAttribute('href');
+    else {
+      link.href = 'tel:' + number;
+      link.textContent = '打给' + (state.emergency.contact || '紧急联系人');
+    }
     const box = $('#emgList');
     box.innerHTML = '';
     EMG_FIELDS.forEach(f => {
@@ -546,7 +590,7 @@
     const wantEdit = edit === undefined ? state.mode === 'child' : edit;
     showEmergencyPane(wantEdit);
     const overlay = $('#emergencyOverlay');
-    const target = wantEdit ? $('#emgRows input') : $('#emgSpeakBtn');
+    const target = wantEdit ? $('#emgRows input') : $('#emgDial[href], #emgSpeakBtn');
     if (overlay.hidden) showOverlay(overlay, target);
     else if (target) target.focus();
   }
@@ -557,6 +601,11 @@
   }
 
   function saveEmergency() {
+    if (emgDraft.phone?.trim() && !dialNumber(emgDraft.phone)) {
+      toast('请核对联系电话，可填写区号或国际区号');
+      $('#emgRows input[type="tel"]').focus();
+      return;
+    }
     EMG_FIELDS.forEach(f => { state.emergency[f.key] = (emgDraft[f.key] || '').trim(); });
     pushFeed('setup', '您更新了爸妈的紧急求助信息');
     save();
@@ -785,7 +834,7 @@
 
   /* ============ 打卡日历与连续天数 ============ */
 
-  const calView = { y: new Date().getFullYear(), m: new Date().getMonth() };
+  const calView = { y: new Date().getFullYear(), m: new Date().getMonth(), followToday: true };
 
   function checkinDayCounts() {
     const map = new Map();
@@ -831,9 +880,12 @@
     $('#bestStreakNum').textContent = String(streak.best);
     $('#streakBox').classList.toggle('is-hot', streak.current >= 7);
 
-    $('#calMonth').textContent = `${calView.y} 年 ${calView.m + 1} 月`;
-
     const now = new Date();
+    if (calView.followToday) {
+      calView.y = now.getFullYear();
+      calView.m = now.getMonth();
+    }
+    $('#calMonth').textContent = `${calView.y} 年 ${calView.m + 1} 月`;
     $('#tearYear').textContent = `${now.getFullYear()} 年 · ${now.getMonth() + 1} 月`;
     $('#tearDate').textContent = String(now.getDate()).padStart(2, '0');
     $('#tearWeek').textContent = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'][now.getDay()];
@@ -883,6 +935,7 @@
     calView.m += delta;
     if (calView.m < 0) { calView.m = 11; calView.y -= 1; }
     if (calView.m > 11) { calView.m = 0; calView.y += 1; }
+    calView.followToday = calView.y === now.getFullYear() && calView.m === now.getMonth();
     renderCalendar();
   }
 
@@ -893,14 +946,75 @@
     state.feed = state.feed.slice(0, 24);
   }
 
-  function checkin(card, fromNode) {
-    if (card.done) {
-      toast(`「${card.heading}」今天已经办妥啦，明天再来领取新的能量`);
+  // 同一浏览器内，打卡和撤销按顺序提交；再次点击时核对最新记录。
+  function updateCheckins(change) {
+    function commit() {
+      try {
+        if (localStorage.getItem(STORE_KEY)) {
+          const mode = state.mode;
+          state = loadState();
+          state.mode = mode;
+        }
+      } catch { /* 无本地存储时继续使用当前页面的数据。 */ }
+      rolloverIfNewDay(false);
+      change();
+    }
+    if (navigator.locks) return navigator.locks.request(STORE_KEY + '.checkins', commit);
+    commit();
+  }
+
+  function undoCheckin(record) {
+    updateCheckins(() => {
+      const index = state.checkins.findIndex(entry => entry.cardId === record.cardId && entry.at === record.at);
+      if (index < 0 || dayKey(new Date(record.at)) !== todayKey()) {
+        render();
+        toast('这次打卡已撤销或已跨日');
+        return;
+      }
+      state.checkins.splice(index, 1);
+      const card = state.cards.find(item => item.id === record.cardId);
+      if (card && card.doneAt === record.at) {
+        card.done = false;
+        card.doneAt = null;
+      }
+      state.energy = Math.max(0, state.energy - ENERGY_PER_CHECKIN);
+      pushFeed('undo', `已撤销「${record.heading}」的打卡，亲情能量 −${ENERGY_PER_CHECKIN}`);
+      save();
+      render();
+      const front = $('#board article:not([aria-hidden]) h3');
+      (front || $('#pendingOnly')).focus({ preventScroll: true });
+      toast(`已撤销「${record.heading}」的打卡`);
+    });
+  }
+
+  function renderDoneHistory() {
+    const records = state.checkins.filter(entry => dayKey(new Date(entry.at)) === todayKey()).reverse();
+    $('#doneHistory').hidden = records.length === 0;
+    $('#doneSummary').textContent = `今日已办妥（${records.length}）`;
+    const list = $('#doneList');
+    list.replaceChildren();
+    for (const record of records) {
+      const row = el('li');
+      const undo = el('button', null, '撤销打卡');
+      undo.type = 'button';
+      undo.setAttribute('aria-label', '撤销打卡：' + record.heading);
+      undo.addEventListener('click', () => undoCheckin(record));
+      row.append(el('span', null, fmtClock(record.at) + ' · ' + record.heading), undo);
+      list.append(row);
+    }
+  }
+
+  function checkin(cardId, fromNode) {
+    const card = state.cards.find(item => item.id === cardId);
+    if (!card || !isDue(card) || card.done) {
+      render();
+      toast(card?.done ? '这张卡今天已经办妥了' : '今天没有这项待办');
       return;
     }
     card.done = true;
     card.doneAt = new Date().toISOString();
-    state.checkins.push({ cardId: card.id, type: card.type, at: card.doneAt, heading: card.heading });
+    const record = { cardId: card.id, type: card.type, at: card.doneAt, heading: card.heading };
+    state.checkins.push(record);
 
     const newStage = addEnergy(ENERGY_PER_CHECKIN);
     pushFeed('checkin', `长辈刚完成「${CATS[card.type].name} · ${card.heading}」打卡，亲情能量 +${ENERGY_PER_CHECKIN}`);
@@ -923,15 +1037,9 @@
     garden.growthTimer = setTimeout(() => garden.classList.remove('checkin-growth'), 6200);
     rainParticles(16);
     cheerChime();
-    voice.say(pick(CATS[card.type].praise), 0.9);
-
-    toast(`已盖上红印章！亲情能量 +${ENERGY_PER_CHECKIN}`);
-    if (newStage) {
-      setTimeout(() => {
-        toast(`亲情花园升级啦：${newStage}！您真了不起`);
-        voice.say(`恭喜！亲情花园升级啦，现在是${newStage}。您的坚持，让全家人都安心。`, 0.9);
-      }, 1800);
-    }
+    const growth = newStage ? `，花园长到了「${newStage}」` : '';
+    voice.say(pick(CATS[card.type].praise) + (newStage ? `花园长到了${newStage}。` : ''), 0.9);
+    toast(`已办妥「${card.heading}」 · 能量 +${ENERGY_PER_CHECKIN}${growth}`, 10000, () => undoCheckin(record));
   }
 
   function sendPhrase(card, text, fromNode) {
@@ -1009,8 +1117,9 @@
     const thisYear = state.checkins.filter(c => new Date(c.at).getFullYear() === year);
     const byType = { medicine: 0, phone: 0, travel: 0, message: 0 };
     thisYear.forEach(c => { if (byType[c.type] !== undefined) byType[c.type] += 1; });
-    const total = state.cards.length;
-    const doneToday = state.cards.filter(c => c.done).length;
+    const today = dueToday();
+    const total = today.length;
+    const doneToday = today.filter(c => c.done).length;
     const streak = computeStreak(checkinDayCounts());
     return {
       year,
@@ -1142,7 +1251,13 @@
     const heading = el('h3', 'card-head', card.heading);
     heading.tabIndex = -1;
     node.appendChild(heading);
-    node.appendChild(cardRows(card));
+    const rows = cardRows(card);
+    if (state.mode === 'child' || (card.schedule && card.schedule.kind !== 'daily')) {
+      const when = el('li');
+      when.append(el('span', 'k', '提醒日期：'), el('span', 'v', scheduleLabel(card)));
+      rows.appendChild(when);
+    }
+    node.appendChild(rows);
 
     if (card.type === 'message') {
       const box = el('div', 'phrases');
@@ -1179,9 +1294,13 @@
         voice.say(cardSpeechText(card), 0.78);
         if (voice.supported) toast('正在为您朗读这张卡片…');
       });
-      const done = iconBtn('act' + (card.done ? '' : ' act-done'), 'ic-check', card.done ? '已办妥' : '我办妥了');
-      if (card.done) { done.disabled = true; done.setAttribute('aria-label', `今天 ${fmtClock(card.doneAt)} 已办妥`); }
-      else done.addEventListener('click', () => checkin(card, done));
+      const done = iconBtn(card.done ? 'act' : 'act act-done', 'ic-check', card.done ? '撤销打卡' : '我办妥了');
+      if (card.done) {
+        const record = { cardId: card.id, at: card.doneAt, heading: card.heading };
+        done.addEventListener('click', () => undoCheckin(record));
+      } else {
+        done.addEventListener('click', () => updateCheckins(() => checkin(card.id, done)));
+      }
       actions.appendChild(listen);
       actions.appendChild(done);
     } else {
@@ -1194,7 +1313,7 @@
 
     if (state.mode === 'child') {
       const admin = el('div', 'card-admin');
-      admin.appendChild(el('span', 'pill ' + (card.done ? 'pill-done' : 'pill-wait'), card.done ? `父母已办妥 · ${fmtClock(card.doneAt)}` : '父母还没打卡'));
+      admin.appendChild(el('span', 'pill ' + (card.done ? 'pill-done' : 'pill-wait'), card.done ? `父母已办妥 · ${fmtClock(card.doneAt)}` : isDue(card) ? '今天待办' : '今天未安排'));
       const edit = el('button', 'mini-btn mini-btn-edit', '修改这张');
       edit.type = 'button';
       edit.addEventListener('click', () => openComposer(card));
@@ -1230,7 +1349,8 @@
   }
 
   function visibleCards() {
-    return state.cards.filter(card => (filter === 'all' || card.type === filter) && (!pendingOnly || !card.done));
+    const cards = state.mode === 'child' && !pendingOnly ? state.cards : dueToday();
+    return cards.filter(card => (filter === 'all' || card.type === filter) && (!pendingOnly || !card.done));
   }
 
   function goPage(nextPage) {
@@ -1329,11 +1449,11 @@
     $('#boardEmpty').hidden = shown.length > 0;
     $('#boardEmpty').textContent = pendingOnly
       ? '这里没有待办事项。取消「只看待办」可查看所有状态。'
-      : '这里还没有卡片，可以在子女视角添加提醒。';
+      : state.mode === 'elder' ? '今天没有这一类提醒。' : '这里还没有卡片，可以添加一张提醒。';
     const doneCount = shown.filter(c => c.done).length;
     $('#boardCount').textContent = state.mode === 'elder'
       ? `共 ${shown.length} 张 · 已办妥 ${doneCount} 张 · ${todayDisplay()}`
-      : `父母今日已完成 ${doneCount}/${shown.length} 张`;
+      : `共 ${shown.length} 张 · 今天安排 ${shown.filter(card => isDue(card)).length} 张`;
     $('#boardTitle').textContent = state.mode === 'elder' ? '今日备忘卡片' : '爸妈的卡片（守护视角）';
   }
 
@@ -1428,16 +1548,21 @@
       if (first) first.focus();
       return;
     }
+    const kind = $('#scheduleKind').value;
+    const date = $('#scheduleDate');
+    if (kind === 'once' && !date.reportValidity()) return;
+    const schedule = { kind };
+    if (kind === 'once') schedule.date = date.value;
+    if (kind === 'weekly') schedule.weekday = Number($('#scheduleWeek').value);
     const v = composerDraft.values;
     const fields = {
       type,
       heading,
+      schedule,
       line2: (v.line2 || '').trim(),
       line3: (v.line3 || '').trim(),
       phone: (v.phone || '').trim(),
     };
-    if (type === 'medicine' && !fields.line3) fields.line3 = '今天';
-    if (type === 'travel' && !fields.line3) fields.line3 = '今天出门';
 
     if (composerDraft.editingId) {
       const card = state.cards.find(c => c.id === composerDraft.editingId);
@@ -1456,13 +1581,25 @@
     pushFeed('setup', `您刚为爸妈新增「${CATS[type].name} · ${heading}」卡片`);
     save();
     filter = 'all';
+    pendingOnly = false;
     boardPage = 0;
     render();
     closeComposer();
-    toast('已添加到爸妈的卡片，切到长辈模式就能看到');
+    toast(`已添加提醒 · ${scheduleLabel(fields)}显示在长辈的卡片里`);
+  }
+
+  function showScheduleFields() {
+    const kind = $('#scheduleKind').value;
+    $('#scheduleDateRow').hidden = kind !== 'once';
+    $('#scheduleWeekRow').hidden = kind !== 'weekly';
   }
 
   function openComposer(editCard) {
+    const schedule = editCard?.schedule;
+    $('#scheduleKind').value = schedule?.kind || 'daily';
+    $('#scheduleDate').value = schedule?.date || todayKey();
+    $('#scheduleWeek').value = String(schedule?.weekday ?? new Date().getDay());
+    showScheduleFields();
     composerDraft.editingId = editCard ? editCard.id : null;
     composerDraft.type = editCard ? editCard.type : 'medicine';
     composerDraft.values = editCard
@@ -1514,9 +1651,11 @@
   }
 
   function render() {
+    renderHeader();
     syncTabs();
     renderGarden();
     renderCalendar();
+    renderDoneHistory();
     renderBoard();
     renderNotice();
     renderSummary();
@@ -1545,6 +1684,7 @@
   $('#posterSaveBtn').addEventListener('click', posterHint);
   $('#composerBtn').addEventListener('click', () => openComposer());
   $('#closeComposerBtn').addEventListener('click', closeComposer);
+  $('#scheduleKind').addEventListener('change', showScheduleFields);
   $('#saveCardBtn').addEventListener('click', saveComposerCard);
   $('#hangupBtn').addEventListener('click', endCall);
 
@@ -1593,7 +1733,7 @@
   });
 
   $('#openPendingBtn').addEventListener('click', () => {
-    pendingOnly = state.cards.some(card => !card.done);
+    pendingOnly = dueToday().some(card => !card.done);
     filter = 'all';
     boardPage = 0;
     syncTabs();
@@ -1650,9 +1790,7 @@
     filter = 'all';
     boardPage = 0;
     lastStage = 0;
-    const nowD = new Date();
-    calView.y = nowD.getFullYear();
-    calView.m = nowD.getMonth();
+    calView.followToday = true;
     save();
     applyTextSize(state.textSize, false);
     applyMode('elder');
@@ -1688,7 +1826,8 @@
     applyTextSize(state.textSize, false);
     lastStage = stageIndex(state.energy);
     render();
-    toast('已同步另一端最新打卡动态');
+    if (!$('#emergencyOverlay').hidden && !$('#emgView').hidden) renderEmergencyView();
+    toast('已同步本机其他页面的最新记录');
   });
 
   /* ============ 启动 ============ */
@@ -1700,7 +1839,6 @@
   }
   placeGarden();
   narrowScreen.addEventListener('change', placeGarden);
-  renderHeader();
   applyTextSize(state.textSize, false);
   applyMode(state.mode);
   render();

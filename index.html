@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#FFFDF7" />
 <title>岁岁念 · 卡片式银发温情备忘录</title>
 <meta name="description" content="Hack4Good 技术向善作品：适老化卡片备忘 + 游戏化亲情正反馈，纯前端运行，数据保存在本机浏览器。" />
-<link rel="stylesheet" href="css/styles.css?v=20261125-deck" />
+<link rel="stylesheet" href="css/styles.css?v=20261125-reminders" />
 </head>
 <body data-mode="elder">
 
@@ -178,6 +178,23 @@
       <p class="field-label">③ 填写提醒内容</p>
       <div class="field-rows" id="fieldRows"></div>
 
+      <fieldset class="schedule-fields">
+        <legend>④ 安排提醒日期</legend>
+        <label>重复方式
+          <select id="scheduleKind">
+            <option value="daily">每天</option>
+            <option value="once">仅这一天</option>
+            <option value="weekly">每周</option>
+          </select>
+        </label>
+        <label id="scheduleDateRow" hidden>提醒日期 <input type="date" id="scheduleDate" required></label>
+        <label id="scheduleWeekRow" hidden>星期几
+          <select id="scheduleWeek">
+            <option value="1">星期一</option><option value="2">星期二</option><option value="3">星期三</option><option value="4">星期四</option>
+            <option value="5">星期五</option><option value="6">星期六</option><option value="0">星期日</option>
+          </select>
+        </label>
+      </fieldset>
       <div class="composer-actions">
         <button type="button" class="btn btn-primary" id="saveCardBtn">保存到爸妈的卡片</button>
         <button type="button" class="btn btn-ghost" id="closeComposerBtn">取消</button>
@@ -204,6 +221,10 @@
         </nav>
         <label class="pending-control"><input type="checkbox" id="pendingOnly">只看待办</label>
       </div>
+      <details class="done-history only-elder" id="doneHistory" hidden>
+        <summary id="doneSummary">今日已办妥</summary>
+        <ul id="doneList"></ul>
+      </details>
       <div class="board-stage" id="boardStage">
         <button type="button" class="btn pager-side pager-prev" id="prevPageBtn" aria-label="上一张">
           <span class="pager-arrow" aria-hidden="true">←</span>
@@ -335,6 +356,7 @@
       <div class="emg-view" id="emgView">
         <p class="emg-kicker">请把下面这些给身边的人看</p>
         <h2 class="emg-title" id="emgTitle">紧急求助信息</h2>
+        <a class="btn btn-primary emg-dial" id="emgDial" hidden></a>
         <dl class="emg-list" id="emgList"></dl>
         <p class="emg-note">这些信息只保存在本机浏览器里，不会上传到任何地方。</p>
         <div class="emg-actions">
@@ -357,6 +379,6 @@
     </div>
   </div>
 
-  <script src="js/app.js?v=20261125-deck"></script>
+  <script src="js/app.js?v=20261125-reminders"></script>
 </body>
 </html>
