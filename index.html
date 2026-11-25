@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#FFFDF7" />
 <title>岁岁念 · 卡片式银发温情备忘录</title>
 <meta name="description" content="Hack4Good 技术向善作品：适老化卡片备忘 + 游戏化亲情正反馈，纯前端运行，数据保存在本机浏览器。" />
-<link rel="stylesheet" href="css/styles.css?v=20261125-paper" />
+<link rel="stylesheet" href="css/styles.css?v=20261125-deck" />
 </head>
 <body data-mode="elder">
 
@@ -14,8 +14,6 @@
        形状只依赖 currentColor 与 --bloom 两个变量，因此选中态（白字底）也能自动反色。 -->
   <svg class="ic-defs" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
     <defs>
-      <symbol id="ic-grid" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" d="M3 4h7v7H3zM14 4h7v7h-7zM3 15h7v6H3zM14 15h7v6h-7z"/></symbol>
-      <symbol id="ic-book" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M3 4q5-1 9 2 4-3 9-2v15q-5-1-9 2-4-3-9-2zM12 6v15"/></symbol>
       <symbol id="ic-medicine" viewBox="0 0 32 32">
         <g transform="rotate(-30 16 15)">
           <rect x="6" y="11" width="20" height="8" rx="4" fill="currentColor" opacity=".3"/>
@@ -188,12 +186,12 @@
     <section class="memo-section" aria-labelledby="boardTitle">
       <div class="board-head">
         <div class="board-head-main">
-          <h2 class="board-title" id="boardTitle">今日备忘</h2>
+          <h2 class="board-title" id="boardTitle">今日备忘卡片</h2>
           <p class="board-count" id="boardCount"></p>
         </div>
         <div class="board-view-switch" role="group" aria-label="卡片查看方式">
-          <button type="button" class="bv-btn is-on" id="viewGridBtn" aria-pressed="true"><svg class="ic" aria-hidden="true"><use href="#ic-grid"/></svg>列表看</button>
-          <button type="button" class="bv-btn" id="viewFlipBtn" aria-pressed="false"><svg class="ic" aria-hidden="true"><use href="#ic-book"/></svg>翻页看</button>
+          <button type="button" class="bv-btn is-on" id="viewFlipBtn" aria-pressed="true">📖 翻页看</button>
+          <button type="button" class="bv-btn" id="viewGridBtn" aria-pressed="false">🗂️ 全部摊开</button>
         </div>
       </div>
       <div class="board-tools">
@@ -211,7 +209,7 @@
           <span class="pager-arrow" aria-hidden="true">←</span>
           <span class="pager-word">上一张</span>
         </button>
-        <div class="board" id="board" tabindex="-1"></div>
+        <div class="board is-flip" id="board" tabindex="-1"></div>
         <button type="button" class="btn pager-side pager-next" id="nextPageBtn" aria-label="下一张">
           <span class="pager-arrow" aria-hidden="true">→</span>
           <span class="pager-word">下一张</span>
@@ -359,6 +357,6 @@
     </div>
   </div>
 
-  <script src="js/app.js?v=20261125-memo"></script>
+  <script src="js/app.js?v=20261125-deck"></script>
 </body>
 </html>

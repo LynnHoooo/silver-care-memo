@@ -155,7 +155,7 @@
 
   let state = loadState();
   let filter = 'all';
-  let boardView = state.boardView;
+  let boardView = 'flip';
   let pendingOnly = false;
   let boardPage = 0;
   let flipTimer = null;
@@ -180,7 +180,6 @@
     s.feed = s.feed || [];
     s.cards = s.cards || [];
     s.emergency = s.emergency || {};
-    s.boardView = s.boardView === 'flip' ? 'flip' : 'grid';
     s.mode = s.mode === 'child' ? 'child' : 'elder';
     s.textSize = TEXT_SIZES[s.textSize] ? s.textSize : 'normal';
     if (s.day !== todayKey()) {
@@ -1281,7 +1280,10 @@
       ].forEach(({ offset, cls }) => {
         const idx = boardPage + offset;
         if (idx >= 0 && idx < shown.length) {
-          const back = el('div', `card deck-sheet ${CATS[shown[idx].type].className} ${cls}`);
+          const back = buildCard(shown[idx]);
+          back.classList.add(cls);
+          // 后页仅作预览；点击露出的纸边翻页，操作按钮留给当前页。
+          for (const child of back.children) child.inert = true;
           back.setAttribute('aria-hidden', 'true');
           back.addEventListener('click', () => goPage(idx));
           board.appendChild(back);
@@ -1328,8 +1330,16 @@
     $('#boardEmpty').textContent = pendingOnly
       ? '这里没有待办事项。取消「只看待办」可查看所有状态。'
       : '这里还没有卡片，可以在子女视角添加提醒。';
-    $('#boardCount').textContent = `${shown.length} 张${pendingOnly ? '待办' : '卡片'}`;
-    $('#boardTitle').textContent = state.mode === 'elder' ? '今日备忘' : '爸妈的备忘';
+    const doneCount = shown.filter(c => c.done).length;
+    $('#boardCount').textContent = state.mode === 'elder'
+      ? `共 ${shown.length} 张 · 已办妥 ${doneCount} 张 · ${todayDisplay()}`
+      : `父母今日已完成 ${doneCount}/${shown.length} 张`;
+    $('#boardTitle').textContent = state.mode === 'elder' ? '今日备忘卡片' : '爸妈的卡片（守护视角）';
+  }
+
+  function todayDisplay() {
+    const d = new Date();
+    return `${d.getMonth() + 1}月${d.getDate()}日`;
   }
 
   /* ============ 渲染：通知栏 ============ */
@@ -1600,16 +1610,14 @@
 
   $('#viewFlipBtn').addEventListener('click', () => {
     if (boardView === 'flip') return;
-    state.boardView = boardView = 'flip';
-    save();
+    boardView = 'flip';
     boardPage = 0;
     renderBoard();
     playEntrance();
   });
   $('#viewGridBtn').addEventListener('click', () => {
     if (boardView === 'grid') return;
-    state.boardView = boardView = 'grid';
-    save();
+    boardView = 'grid';
     renderBoard();
     playEntrance();
   });
@@ -1637,7 +1645,7 @@
   $('#resetBtn').addEventListener('click', () => {
     if (!confirm('会清空本机记录的所有卡片和打卡进度，恢复到 4 条示例卡片，确定吗？')) return;
     state = seedState();
-    boardView = 'grid';
+    boardView = 'flip';
     pendingOnly = false;
     filter = 'all';
     boardPage = 0;
@@ -1677,7 +1685,6 @@
     const mode = document.body.dataset.mode;
     state = loadState();
     state.mode = mode;
-    boardView = state.boardView;
     applyTextSize(state.textSize, false);
     lastStage = stageIndex(state.energy);
     render();
